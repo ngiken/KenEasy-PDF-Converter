@@ -23,7 +23,7 @@
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.2.2-27c499?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.2.3-27c499?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
@@ -138,11 +138,21 @@ scratch/             ← 维护脚本
 
 ---
 
+## 更新说明
+
+### v0.2.3
+- **中英双语界面**：右上角一键切换，记住选择；首次按浏览器语言
+- **体验优化**：文案与提示更完整，语言切换后队列/错误信息同步更新
+- **离线包 Release**：GitHub Releases 提供可本地下载的静态包
+
+---
+
 ## 链接一览
 
 | 用途 | 链接 |
 | --- | --- |
 | **立即使用（推荐）** | https://ngiken.github.io/KenEasy-PDF-Converter/ |
+| **本地下载（Release）** | https://github.com/ngiken/KenEasy-PDF-Converter/releases/latest |
 | 源代码仓库 | https://github.com/ngiken/KenEasy-PDF-Converter |
 | 问题反馈 | https://github.com/ngiken/KenEasy-PDF-Converter/issues |
 

@@ -44,6 +44,9 @@ build/
 *.bak
 *.orig
 
+# Local release packaging output (uploaded via gh release, not committed)
+scratch/release/
+
 # Optional local notes
 TODO.local.md
 NOTES.local.md

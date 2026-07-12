@@ -23,7 +23,7 @@ Everything runs in your browser. **No upload. No install. No account.**
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/use%20online-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.2.2-27c499?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.2.3-27c499?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
@@ -94,11 +94,21 @@ Open <http://localhost:5173/>. Vendored libs live in `web/vendor/` for offline u
 
 ---
 
+## Changelog
+
+### v0.2.3
+- **Bilingual UI (中文 / English)** with header switcher; remembers choice; first visit follows browser language
+- **Polish**: clearer copy and toasts; queue/error strings update when language changes
+- **Offline Release**: downloadable static bundle on GitHub Releases
+
+---
+
 ## Links
 
 | | |
 | --- | --- |
 | **Use now** | https://ngiken.github.io/KenEasy-PDF-Converter/ |
+| **Download (Release)** | https://github.com/ngiken/KenEasy-PDF-Converter/releases/latest |
 | Source | https://github.com/ngiken/KenEasy-PDF-Converter |
 | Issues | https://github.com/ngiken/KenEasy-PDF-Converter/issues |
 
