@@ -1,142 +1,150 @@
 <div align="center">
 
-  <h1>KenEasy PDF Converter</h1>
+# KenEasy PDF Converter
 
-  <p>
-    浏览器内把 Word、图片、文本转成 PDF。拖入、排序、合并，文件不离开本机。支持离线包。
-  </p>
+**打开就能用的 PDF 转换器** — 拖入 Word / 图片 / 文本，排序后一键合并成 PDF。  
+文件只在你浏览器里处理，**不上传、不安装、不注册**。
 
-  <p>
-    中文
-    ·
-    <a href="README.en.md">English</a>
-  </p>
+<br/>
 
-  <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-0.2.0-fb7299">
-    <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-27c499">
-    <img alt="Offline" src="https://img.shields.io/badge/offline-vendored-00aeec">
-    <img alt="License" src="https://img.shields.io/badge/license-MIT-00aeec">
-  </p>
+### 👉 点这里直接使用
+
+# [🚀 打开转换器（在线）](https://ngiken.github.io/KenEasy-PDF-Converter/)
+
+**https://ngiken.github.io/KenEasy-PDF-Converter/**
+
+> 上面这个才是**工具网页**。  
+> 你现在看的 GitHub 页面只是**源代码**，不能当转换器点着用。
+
+<br/>
+
+[中文](README.md) · [English](README.en.md)
+
+<br/>
+
+<img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.2.1-27c499?style=for-the-badge">
+<img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
+<img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 </div>
 
-## 项目简介
+---
 
-KenEasy PDF Converter 是一个**纯前端**的在线 PDF 转换器。打开链接即可使用，无需安装、无需账号。文件在浏览器内存中处理，**不会上传到任何服务器**。
+## 30 秒上手
 
-适合：把几张截图 / 一份 Word / 若干文本快速合成一个可分享的 PDF。
+1. 打开：**[在线转换器](https://ngiken.github.io/KenEasy-PDF-Converter/)**
+2. 把文件拖进页面（支持多选）
+3. 按住 `⠿` 拖动调整顺序（可选）
+4. 确认「全部合并成一个 PDF」（默认已开）
+5. 点 **生成 PDF** → 自动下载
 
-## 核心能力
+就这么多。没有账号、没有安装包、没有服务器上传。
 
-| 能力 | 说明 |
+---
+
+## 这是什么
+
+KenEasy PDF Converter 是一个**纯前端**小工具：
+
+| 你想做的事 | 它怎么帮你 |
 | --- | --- |
-| 拖入即用 | 拖拽或点选多个文件进入队列 |
-| 排序 | 按住手柄拖动，决定合并后的页序 |
-| 合并 / 分开 | 默认全部合成一个 PDF；也可关掉合并，逐个下载 |
-| 图片 → PDF | PNG / JPG / WEBP / GIF / BMP |
-| Word → PDF | `.docx` 保留标题 / 段落 / 列表 / 表格 / 粗斜体 / 内嵌图（分页渲染） |
-| 文本 → PDF | TXT / MD / CSV 等 |
-| PDF 合并 | 已有 PDF 也可加入队列，按顺序合并 |
-| 离线可用 | 依赖已 vendored 到 `web/vendor/`，本地静态服务即可断网使用 |
-| 零后端 | 静态页面，任意静态托管 |
+| 几张截图合成一份 PDF | 拖入图片 → 排序 → 合并下载 |
+| Word 转 PDF | 拖入 `.docx`（尽量保留标题、列表、表格、图片） |
+| 文本 / Markdown 转 PDF | 拖入 TXT / MD / CSV |
+| 多个 PDF 拼在一起 | 把 PDF 也丢进队列，按顺序合并 |
+| 隐私敏感文件 | 全程在本机浏览器完成，不经过服务器 |
 
-## 使用方法
+适合：交材料、发截图合集、临时把杂文件收成一个 PDF。
 
-1. 打开 `web/index.html`（本地服务或部署后的链接）。
-2. 把文件拖进虚线区域，或点击选择。
-3. 需要时拖动手柄调整顺序。
-4. 勾选「全部合并成一个 PDF」（默认开）。
-5. 点「生成 PDF」，浏览器会下载结果。
+---
 
-## 本地运行
+## 支持什么
+
+| 类型 | 格式 | 说明 |
+| --- | --- | --- |
+| 图片 | PNG / JPG / WEBP / GIF / BMP | 可调 A4、Letter、按图尺寸 |
+| Word | **`.docx`** | 旧版 `.doc` 请先另存为 docx |
+| 文本 | TXT / MD / CSV 等 | 自动分页 |
+| PDF | `.pdf` | 可与其它文件一起排序合并 |
+
+**选项：** 合并 / 分开下载、页面尺寸、图片适配、页边距、输出文件名。
+
+---
+
+## 隐私说明
+
+- 文件**不会上传**到任何服务器（本项目也没有后端）
+- 转换只在当前浏览器标签页的内存里进行
+- 关掉页面后，队列里的文件引用会被释放
+
+---
+
+## 本地使用（可选）
+
+不想走在线链接时，可在本机跑同样的页面（依赖已打包在 `web/vendor/`，可离线）：
 
 ```powershell
-# 在项目根目录
+# 在仓库根目录
 python -m http.server 5173 --directory web
 ```
 
-浏览器打开 <http://localhost:5173/>。
+然后打开 <http://localhost:5173/>。
 
-> 推荐用本地静态服务而不是 `file://` 直接打开，避免部分浏览器对本地脚本的限制。
+> 不推荐直接双击 `index.html`（`file://`），部分浏览器会限制脚本；用上面的本地服务最稳。
 
-### 重新拉取 vendor（可选）
+重新下载离线依赖（可选）：
 
 ```powershell
 .\scratch\fetch-vendor.ps1
 ```
 
-## 在线使用（打开链接就用）
+---
 
-部署后的页面（GitHub Pages）：
+## 已知限制
 
-**https://ngiken.github.io/KenEasy-PDF-Converter/**
+- 复杂 Word 版式会简化（页眉页脚、文本框、浮动环绕等）
+- Word 页为清晰可读的渲染结果，不是印刷机级 1:1
+- 建议单文件 &lt; 40MB，队列最多约 80 个
+- 加密 PDF 可能无法合并
 
-说明：
+---
 
-- 上面这个链接才是**转换器本身**
-- `https://github.com/ngiken/KenEasy-PDF-Converter` 只是**源代码仓库**，不是工具页面
-- 首次部署可能要等 1～2 分钟；若 404，稍后再刷新
+## 技术与目录
 
-本地同样可以：`python -m http.server 5173 --directory web` → http://localhost:5173/
+纯静态站点，推送到 `main` 后由 GitHub Actions 自动发布 Pages。
 
-## 部署（有链接就能用）
-
-本仓库已配置 GitHub Actions：每次推送到 `main` 会自动把 `web/` 发布到 Pages。
-
-也可把 `web/` 丢到任意静态托管（Cloudflare Pages / Netlify / Nginx / OSS）。没有服务端、没有 API、没有环境变量。
-
-## 支持格式与限制
-
-| 输入 | 行为 |
+| 库 | 用途 |
 | --- | --- |
-| 图片 | 按页放入 PDF；可选 A4 / Letter / 按图尺寸 |
-| `.docx` | mammoth → HTML → 分页截图像素写入 PDF；标题/列表/表格/内嵌图尽量保留 |
-| `.doc`（旧 Word） | **不支持**，请先另存为 `.docx` |
-| 文本 | 按行分页写入 |
-| `.pdf` | 原样并入合并结果（加密 PDF 可能失败） |
-
-其它限制：
-
-- 单文件建议 &lt; 40MB，队列最多 80 个
-- Word 版式：**不是** 100% 打印引擎级还原；页眉页脚、文本框、浮动环绕、复杂分栏仍会简化
-- Word 输出页是光栅化内容（清晰可读，可选中文字有限）
-- 拉丁纯文本仍走矢量文字层
-
-## 技术栈（离线 vendor）
-
-| 库 | 用途 | 位置 |
-| --- | --- | --- |
-| SortableJS 1.15.6 | 队列拖拽排序 | `web/vendor/Sortable.min.js` |
-| jsPDF 2.5.2 | 生成 PDF | `web/vendor/jspdf.umd.min.js` |
-| pdf-lib 1.17.1 | 合并 PDF | `web/vendor/pdf-lib.min.js` |
-| mammoth 1.9.0 | 读取 `.docx` → HTML | `web/vendor/mammoth.browser.min.js` |
-| html2canvas 1.4.1 | Word HTML 分页渲染 | `web/vendor/html2canvas.min.js` |
-
-许可说明见 [`web/vendor/NOTICE.txt`](./web/vendor/NOTICE.txt)。
-
-## 目录结构
+| SortableJS | 队列拖拽 |
+| jsPDF | 生成 PDF |
+| pdf-lib | 合并 PDF |
+| mammoth | 读取 `.docx` |
+| html2canvas | Word 版式分页渲染 |
 
 ```text
-02-KenEasy-PDF-Converter/
-  web/
-    index.html
-    styles.css
-    app.js
-    vendor/          # 离线依赖
-  scratch/
-    fetch-vendor.ps1
-  README.md
-  README.en.md
-  CLAUDE.md
-  LICENSE
+web/                 ← 网站本体（也是 Pages 发布内容）
+  index.html
+  styles.css
+  app.js
+  vendor/            ← 离线依赖
+.github/workflows/   ← 自动部署
+scratch/             ← 维护脚本
 ```
 
-## 隐私
+第三方许可：[`web/vendor/NOTICE.txt`](./web/vendor/NOTICE.txt)
 
-- 转换只在当前浏览器标签页内存中进行
-- 不发送文件内容到后端（本项目也没有后端）
-- 刷新或关闭页面后，队列中的文件引用会被释放
+---
+
+## 链接一览
+
+| 用途 | 链接 |
+| --- | --- |
+| **立即使用（推荐）** | https://ngiken.github.io/KenEasy-PDF-Converter/ |
+| 源代码仓库 | https://github.com/ngiken/KenEasy-PDF-Converter |
+| 问题反馈 | https://github.com/ngiken/KenEasy-PDF-Converter/issues |
+
+---
 
 ## License
 

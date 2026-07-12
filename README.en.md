@@ -1,70 +1,104 @@
 <div align="center">
 
-  <h1>KenEasy PDF Converter</h1>
+# KenEasy PDF Converter
 
-  <p>
-    Convert Word, images, and text to PDF in the browser. Drag, reorder, merge — files never leave your device. Offline-ready vendor bundle included.
-  </p>
+**Open the link and convert** — drop Word / images / text, reorder, merge into one PDF.  
+Everything runs in your browser. **No upload. No install. No account.**
 
-  <p>
-    <a href="README.md">中文</a>
-    ·
-    English
-  </p>
+<br/>
 
-  <p>
-    <img alt="Version" src="https://img.shields.io/badge/version-0.2.0-fb7299">
-    <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-27c499">
-    <img alt="Offline" src="https://img.shields.io/badge/offline-vendored-00aeec">
-    <img alt="License" src="https://img.shields.io/badge/license-MIT-00aeec">
-  </p>
+### 👉 Use it now
+
+# [🚀 Open the converter](https://ngiken.github.io/KenEasy-PDF-Converter/)
+
+**https://ngiken.github.io/KenEasy-PDF-Converter/**
+
+> That link is the **live app**.  
+> This GitHub page is **source code only** — not the tool itself.
+
+<br/>
+
+[中文](README.md) · [English](README.en.md)
+
+<br/>
+
+<img alt="Use online" src="https://img.shields.io/badge/use%20online-ngiken.github.io-fb7299?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.2.1-27c499?style=for-the-badge">
+<img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
+<img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 </div>
 
-## Overview
+---
 
-KenEasy PDF Converter is a **client-only** PDF tool. Open the link and use it — no install, no account. Processing stays in browser memory; **nothing is uploaded**.
+## 30-second start
 
-## Features
+1. Open the **[live converter](https://ngiken.github.io/KenEasy-PDF-Converter/)**
+2. Drop files (multi-select supported)
+3. Drag `⠿` to reorder (optional)
+4. Keep “merge into one PDF” on (default)
+5. Click **Generate PDF** → download
 
-| Feature | Details |
+---
+
+## What it does
+
+| Goal | How |
 | --- | --- |
-| Drag & drop | Drop or pick multiple files into a queue |
-| Reorder | Drag handles to set merge order |
-| Merge / split | Default: one combined PDF; optional per-file downloads |
-| Images | PNG / JPG / WEBP / GIF / BMP → PDF |
-| Word | `.docx` with headings, lists, tables, emphasis, embedded images |
-| Text | TXT / MD / CSV → PDF |
-| PDF merge | Existing PDFs can join the queue |
-| Offline | Libraries vendored under `web/vendor/` |
-| Zero backend | Static site; host anywhere |
+| Screenshots → one PDF | Drop images → reorder → merge |
+| Word → PDF | Drop `.docx` (headings, lists, tables, images kept as much as possible) |
+| Text / Markdown → PDF | Drop TXT / MD / CSV |
+| Stitch PDFs | Add PDFs to the same queue |
+| Private files | Fully client-side — nothing is uploaded |
 
-## Run locally
+---
+
+## Supported inputs
+
+| Kind | Formats |
+| --- | --- |
+| Images | PNG / JPG / WEBP / GIF / BMP |
+| Word | **`.docx` only** (save legacy `.doc` as docx first) |
+| Text | TXT / MD / CSV … |
+| PDF | Merge / reorder with other files |
+
+---
+
+## Privacy
+
+Files never leave your browser tab. There is no backend and no file upload API.
+
+---
+
+## Run locally (optional)
 
 ```powershell
 python -m http.server 5173 --directory web
 ```
 
-Open <http://localhost:5173/>.
-
-Refresh vendors:
+Open <http://localhost:5173/>. Vendored libs live in `web/vendor/` for offline use.
 
 ```powershell
 .\scratch\fetch-vendor.ps1
 ```
 
-## Use online (just open the link)
-
-**https://ngiken.github.io/KenEasy-PDF-Converter/**
-
-Note: the GitHub repo page is source code only, not the app. GitHub Actions deploys `web/` to Pages on every push to `main`.
+---
 
 ## Limits
 
-- `.doc` (legacy Word) is not supported — save as `.docx` first
-- Word layout is improved but not print-engine perfect (headers/footers, text boxes, complex floats still simplified)
-- Word pages are rasterized for reliable CJK/layout; Latin plain text remains vector text
-- Suggested max ~40MB per file, 80 files per queue
+- Complex Word layout is simplified (headers/footers, text boxes, floats)
+- ~40MB per file suggested, ~80 files per queue
+- Encrypted PDFs may fail to merge
+
+---
+
+## Links
+
+| | |
+| --- | --- |
+| **Use now** | https://ngiken.github.io/KenEasy-PDF-Converter/ |
+| Source | https://github.com/ngiken/KenEasy-PDF-Converter |
+| Issues | https://github.com/ngiken/KenEasy-PDF-Converter/issues |
 
 ## License
 
