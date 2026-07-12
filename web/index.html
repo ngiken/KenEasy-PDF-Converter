@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KenEasy PDF Converter — 拖入即转 PDF</title>
-  <meta name="description" content="浏览器内把 Word、图片、文本转成 PDF。拖入、排序、合并，文件不离开本机。">
+  <meta name="description" content="浏览器内把 Word、图片、文本转成 PDF。拖入、排序、合并，文件不离开本机。支持离线打开。">
   <meta name="theme-color" content="#101114">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -20,7 +20,7 @@
       </div>
       <div class="header-badges">
         <span class="badge">本地处理</span>
-        <span class="badge badge-blue">无需安装</span>
+        <span class="badge badge-blue">可离线</span>
       </div>
     </header>
 
@@ -113,25 +113,26 @@
         <h3>说明</h3>
         <ul class="tips">
           <li>转换在你的浏览器内存里完成，文件<strong>不会上传</strong>到任何服务器。</li>
-          <li>Word 仅支持 <code>.docx</code>（新版 Word）。旧版 <code>.doc</code> 请先另存为 docx。</li>
-          <li>DOCX / 文本会尽量以<strong>可选中文字</strong>写入 PDF；复杂版式与嵌入字体可能简化。</li>
+          <li>Word 仅支持 <code>.docx</code>。会尽量保留标题、段落、列表、表格、粗斜体与内嵌图片。</li>
+          <li>旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。</li>
           <li>已有 PDF 可加入队列，用于排序后与其它文件合并。</li>
-          <li>打开本页链接即可使用，无需安装；也可离线打开 <code>index.html</code>（部分 CDN 库需联网首次加载）。</li>
+          <li>依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。</li>
         </ul>
       </section>
     </main>
 
     <footer class="footer">
       <span>KenEasy PDF Converter · MIT</span>
-      <span class="muted">开源 · 纯前端</span>
+      <span class="muted">开源 · 纯前端 · 可离线</span>
     </footer>
   </div>
 
-  <!-- Vendors: pinned for reproducibility -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
+  <!-- Vendored offline (see web/vendor/NOTICE.txt) -->
+  <script src="vendor/Sortable.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/pdf-lib.min.js"></script>
+  <script src="vendor/mammoth.browser.min.js"></script>
+  <script src="vendor/html2canvas.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

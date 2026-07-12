@@ -1,0 +1,12 @@
+Third-party libraries vendored under this folder for offline use.
+
+| File | Package | Version | License |
+| --- | --- | --- | --- |
+| Sortable.min.js | sortablejs | 1.15.6 | MIT |
+| jspdf.umd.min.js | jspdf | 2.5.2 | MIT |
+| pdf-lib.min.js | pdf-lib | 1.17.1 | MIT |
+| mammoth.browser.min.js | mammoth | 1.9.0 | BSD-2-Clause |
+| html2canvas.min.js | html2canvas | 1.4.1 | MIT |
+
+Downloaded from jsDelivr CDN mirrors of the published npm packages.
+Do not edit minified files by hand. Re-fetch when bumping versions in index.html.

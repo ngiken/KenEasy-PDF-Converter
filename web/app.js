@@ -1,36 +1,39 @@
-/* KenEasy PDF Converter — browser-only, no uploads */
+/* KenEasy PDF Converter — browser-only, offline-capable (vendored libs) */
 (function () {
   "use strict";
 
-  const PAGE_SIZES = {
+  var PAGE_SIZES = {
     a4: { w: 595.28, h: 841.89 },
     letter: { w: 612, h: 792 },
   };
 
-  const MAX_FILES = 80;
-  const MAX_FILE_BYTES = 40 * 1024 * 1024;
+  var MAX_FILES = 80;
+  var MAX_FILE_BYTES = 40 * 1024 * 1024;
+  var PT_TO_CSS_PX = 96 / 72;
 
   /** @type {{id:string,file:File,kind:string,name:string,size:number,previewUrl?:string,error?:string}[]} */
-  let items = [];
-  let converting = false;
-  let sortable = null;
+  var items = [];
+  var converting = false;
+  var sortable = null;
 
-  const $ = (id) => document.getElementById(id);
-  const dropzone = $("dropzone");
-  const fileInput = $("fileInput");
-  const fileList = $("fileList");
-  const emptyState = $("emptyState");
-  const fileCount = $("fileCount");
-  const btnClear = $("btnClear");
-  const btnConvert = $("btnConvert");
-  const statusPanel = $("statusPanel");
-  const statusText = $("statusText");
-  const statusPct = $("statusPct");
-  const statusDetail = $("statusDetail");
-  const progressBar = $("progressBar");
+  var $ = function (id) {
+    return document.getElementById(id);
+  };
+  var dropzone = $("dropzone");
+  var fileInput = $("fileInput");
+  var fileList = $("fileList");
+  var emptyState = $("emptyState");
+  var fileCount = $("fileCount");
+  var btnClear = $("btnClear");
+  var btnConvert = $("btnConvert");
+  var statusPanel = $("statusPanel");
+  var statusText = $("statusText");
+  var statusPct = $("statusPct");
+  var statusDetail = $("statusDetail");
+  var progressBar = $("progressBar");
 
   function toast(msg, isError) {
-    let el = document.querySelector(".toast");
+    var el = document.querySelector(".toast");
     if (!el) {
       el = document.createElement("div");
       el.className = "toast";
@@ -40,7 +43,9 @@
     el.classList.toggle("error", !!isError);
     el.classList.add("show");
     clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove("show"), 3200);
+    el._t = setTimeout(function () {
+      el.classList.remove("show");
+    }, 3200);
   }
 
   function uid() {
@@ -54,8 +59,8 @@
   }
 
   function detectKind(file) {
-    const name = (file.name || "").toLowerCase();
-    const type = (file.type || "").toLowerCase();
+    var name = (file.name || "").toLowerCase();
+    var type = (file.type || "").toLowerCase();
     if (type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp)$/i.test(name)) return "image";
     if (type === "application/pdf" || name.endsWith(".pdf")) return "pdf";
     if (
@@ -93,11 +98,12 @@
   }
 
   function addFiles(fileListLike) {
-    const incoming = Array.from(fileListLike || []);
+    var incoming = Array.from(fileListLike || []);
     if (!incoming.length) return;
 
-    let added = 0;
-    for (const file of incoming) {
+    var added = 0;
+    for (var i = 0; i < incoming.length; i++) {
+      var file = incoming[i];
       if (items.length >= MAX_FILES) {
         toast("一次最多 " + MAX_FILES + " 个文件", true);
         break;
@@ -106,8 +112,8 @@
         toast(file.name + " 超过 40MB，已跳过", true);
         continue;
       }
-      const kind = detectKind(file);
-      const item = {
+      var kind = detectKind(file);
+      var item = {
         id: uid(),
         file: file,
         kind: kind,
@@ -137,11 +143,11 @@
   }
 
   function removeItem(id) {
-    const idx = items.findIndex(function (x) {
+    var idx = items.findIndex(function (x) {
       return x.id === id;
     });
     if (idx < 0) return;
-    const it = items[idx];
+    var it = items[idx];
     if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
     items.splice(idx, 1);
     renderList();
@@ -220,9 +226,9 @@
       meta.appendChild(name);
       meta.appendChild(sub);
 
-      var kind = document.createElement("span");
-      kind.className = "kind " + (it.error ? "unknown" : it.kind);
-      kind.textContent = kindLabel(it.kind);
+      var kindEl = document.createElement("span");
+      kindEl.className = "kind " + (it.error ? "unknown" : it.kind);
+      kindEl.textContent = kindLabel(it.kind);
 
       var del = document.createElement("button");
       del.type = "button";
@@ -242,7 +248,7 @@
       li.appendChild(handle);
       li.appendChild(thumb);
       li.appendChild(meta);
-      li.appendChild(kind);
+      li.appendChild(kindEl);
       li.appendChild(del);
       fileList.appendChild(li);
     }
@@ -307,7 +313,6 @@
     canvas.height = img.naturalHeight || img.height;
     if (!canvas.width || !canvas.height) throw new Error("图片尺寸无效");
     var ctx = canvas.getContext("2d");
-    // White underlay for transparent PNGs so PDF doesn't look black
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
@@ -332,9 +337,189 @@
     };
   }
 
+  function waitForImages(root) {
+    var imgs = Array.prototype.slice.call(root.querySelectorAll("img"));
+    if (!imgs.length) return Promise.resolve();
+    return Promise.all(
+      imgs.map(function (img) {
+        if (img.complete && img.naturalWidth) return Promise.resolve();
+        return new Promise(function (resolve) {
+          var done = function () {
+            resolve();
+          };
+          img.onload = done;
+          img.onerror = done;
+          setTimeout(done, 8000);
+        });
+      })
+    );
+  }
+
+  var DOCX_STYLE =
+    "box-sizing:border-box;" +
+    "margin:0;padding:0;" +
+    'font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC","Segoe UI",sans-serif;' +
+    "font-size:11pt;line-height:1.55;color:#111;background:#fff;" +
+    "word-wrap:break-word;overflow-wrap:anywhere;";
+
+  var DOCX_INNER_CSS =
+    "h1{font-size:20pt;font-weight:700;margin:0 0 12px;line-height:1.3;color:#111}" +
+    "h2{font-size:16pt;font-weight:700;margin:18px 0 10px;line-height:1.35;color:#111}" +
+    "h3{font-size:13.5pt;font-weight:700;margin:14px 0 8px;line-height:1.4;color:#111}" +
+    "h4,h5,h6{font-size:12pt;font-weight:700;margin:12px 0 6px;line-height:1.4;color:#111}" +
+    "p{margin:0 0 10px;text-align:justify}" +
+    "p:empty::before{content:'\\00a0'}" +
+    "ul,ol{margin:0 0 10px;padding-left:1.4em}" +
+    "li{margin:0 0 4px}" +
+    "strong,b{font-weight:700}" +
+    "em,i{font-style:italic}" +
+    "u{text-decoration:underline}" +
+    "a{color:#0b57d0;text-decoration:none}" +
+    "table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:10.5pt}" +
+    "th,td{border:1px solid #444;padding:6px 8px;vertical-align:top;text-align:left}" +
+    "th{background:#f3f4f6;font-weight:700}" +
+    "img{max-width:100%;height:auto;display:block;margin:8px 0}" +
+    "blockquote{margin:0 0 10px;padding:6px 12px;border-left:3px solid #bbb;color:#333}" +
+    "hr{border:none;border-top:1px solid #ccc;margin:14px 0}" +
+    "pre,code{font-family:ui-monospace,Consolas,monospace;font-size:10pt}" +
+    "pre{white-space:pre-wrap;background:#f7f7f8;border:1px solid #e5e7eb;padding:8px;margin:0 0 10px;border-radius:4px}";
+
   /**
-   * Build a PDF ArrayBuffer for one item using jsPDF.
-   * PDF inputs are returned as raw bytes (already PDF).
+   * Render HTML (from mammoth) into multipage PDF via html2canvas page slices.
+   * Preserves headings, lists, tables, inline emphasis, and embedded images.
+   */
+  async function writeHtmlDocument(doc, html, opts) {
+    if (!window.html2canvas) {
+      throw new Error("html2canvas 未加载（离线包不完整）");
+    }
+
+    var pageW = opts.pageW;
+    var pageH = opts.pageH;
+    var margin = opts.margin;
+    var contentWpt = Math.max(pageW - margin * 2, 40);
+    var contentHpt = Math.max(pageH - margin * 2, 40);
+    var contentWpx = Math.floor(contentWpt * PT_TO_CSS_PX);
+    var contentHpx = Math.floor(contentHpt * PT_TO_CSS_PX);
+
+    var host = document.createElement("div");
+    host.setAttribute("aria-hidden", "true");
+    host.style.cssText =
+      "position:fixed;left:-100000px;top:0;width:" +
+      contentWpx +
+      "px;background:#fff;z-index:-1;pointer-events:none;overflow:visible;";
+
+    var style = document.createElement("style");
+    style.textContent =
+      ".ke-docx-root{" +
+      DOCX_STYLE +
+      "width:" +
+      contentWpx +
+      "px;}" +
+      DOCX_INNER_CSS.split("}")
+        .filter(function (chunk) {
+          return chunk.trim();
+        })
+        .map(function (chunk) {
+          var parts = chunk.split("{");
+          if (parts.length < 2) return "";
+          var sel = parts[0].trim();
+          var body = parts.slice(1).join("{");
+          return (
+            sel
+              .split(",")
+              .map(function (s) {
+                return ".ke-docx-root " + s.trim();
+              })
+              .join(",") +
+            "{" +
+            body +
+            "}"
+          );
+        })
+        .join("");
+
+    var root = document.createElement("div");
+    root.className = "ke-docx-root";
+    root.innerHTML = html && html.trim() ? html : "<p>（空文档）</p>";
+
+    host.appendChild(style);
+    host.appendChild(root);
+    document.body.appendChild(host);
+
+    try {
+      await waitForImages(root);
+      // layout settle
+      await new Promise(function (r) {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(r);
+        });
+      });
+
+      var scale = Math.min(2, window.devicePixelRatio || 1.5);
+      var fullCanvas = await window.html2canvas(root, {
+        backgroundColor: "#ffffff",
+        scale: scale,
+        useCORS: true,
+        logging: false,
+        width: contentWpx,
+        windowWidth: contentWpx,
+      });
+
+      var sliceH = Math.max(1, Math.floor(contentHpx * scale));
+      var totalH = fullCanvas.height;
+      var pageIndex = 0;
+
+      for (var y = 0; y < totalH; y += sliceH) {
+        var h = Math.min(sliceH, totalH - y);
+        // Avoid tiny trailing blank pages (< 8 CSS px)
+        if (h < 8 * scale && pageIndex > 0) break;
+
+        var pageCanvas = document.createElement("canvas");
+        pageCanvas.width = fullCanvas.width;
+        pageCanvas.height = h;
+        var ctx = pageCanvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          fullCanvas,
+          0,
+          y,
+          fullCanvas.width,
+          h,
+          0,
+          0,
+          fullCanvas.width,
+          h
+        );
+
+        var dataUrl = pageCanvas.toDataURL("image/jpeg", 0.93);
+        if (pageIndex > 0) {
+          doc.addPage([pageW, pageH]);
+        }
+        // Draw slice into content box; height scales if last partial page
+        var drawH = (h / scale) * (72 / 96);
+        doc.addImage(dataUrl, "JPEG", margin, margin, contentWpt, drawH);
+        pageIndex++;
+
+        // yield UI
+        await new Promise(function (r) {
+          setTimeout(r, 0);
+        });
+      }
+
+      if (pageIndex === 0) {
+        // empty canvas edge case
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.text("(empty)", margin, margin + 14);
+      }
+    } finally {
+      if (host.parentNode) host.parentNode.removeChild(host);
+    }
+  }
+
+  /**
+   * Build a PDF for one queue item.
    */
   async function itemToPdfBytes(item, options) {
     if (item.kind === "pdf") {
@@ -355,11 +540,9 @@
       var pageW;
       var pageH;
       if (pageSizeKey === "auto") {
-        // ~96dpi CSS pixels → points
         var scale = 72 / 96;
         pageW = Math.max(iw * scale, 72);
         pageH = Math.max(ih * scale, 72);
-        // Cap huge images
         var maxSide = 2000;
         if (pageW > maxSide || pageH > maxSide) {
           var s = maxSide / Math.max(pageW, pageH);
@@ -384,22 +567,48 @@
       return new Uint8Array(doc.output("arraybuffer"));
     }
 
-    // text / docx → textual PDF
     var pageW2 = fixed.w;
     var pageH2 = fixed.h;
     var doc2 = new jsPDF({ unit: "pt", format: [pageW2, pageH2], compress: true });
 
-    var text = "";
-    if (item.kind === "text") {
-      text = await readAsText(item.file);
-    } else if (item.kind === "docx") {
+    if (item.kind === "docx") {
       if (!window.mammoth) throw new Error("Mammoth 未加载");
-      var result = await window.mammoth.extractRawText({
-        arrayBuffer: await readAsArrayBuffer(item.file),
+      var ab = await readAsArrayBuffer(item.file);
+      var result = await window.mammoth.convertToHtml(
+        { arrayBuffer: ab },
+        {
+          convertImage: window.mammoth.images.imgElement(function (image) {
+            return image.read("base64").then(function (imageBuffer) {
+              return {
+                src: "data:" + image.contentType + ";base64," + imageBuffer,
+              };
+            });
+          }),
+          styleMap: [
+            "p[style-name='Title'] => h1:fresh",
+            "p[style-name='Subtitle'] => h2:fresh",
+            "p[style-name='Heading 1'] => h1:fresh",
+            "p[style-name='Heading 2'] => h2:fresh",
+            "p[style-name='Heading 3'] => h3:fresh",
+            "p[style-name='Heading 4'] => h4:fresh",
+            "r[style-name='Strong'] => strong",
+          ],
+        }
+      );
+      var html = result.value || "";
+      if (result.messages && result.messages.length) {
+        console.info("mammoth:", result.messages);
+      }
+      await writeHtmlDocument(doc2, html, {
+        pageW: pageW2,
+        pageH: pageH2,
+        margin: margin,
       });
-      text = result.value || "";
+      return new Uint8Array(doc2.output("arraybuffer"));
     }
 
+    // plain text
+    var text = await readAsText(item.file);
     text = (text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
     if (!text.trim()) text = "（空文件）";
 
@@ -407,23 +616,18 @@
       pageW: pageW2,
       pageH: pageH2,
       margin: margin,
-      title: item.name,
     });
 
     return new Uint8Array(doc2.output("arraybuffer"));
   }
 
   function hasNonLatin(str) {
-    // Code points above Latin-1 → canvas path so CJK / emoji render via system fonts
     for (var i = 0; i < str.length; i++) {
       if (str.charCodeAt(i) > 255) return true;
     }
     return false;
   }
 
-  /**
-   * Write multi-page text. Uses jsPDF text for Latin; canvas→image lines for CJK.
-   */
   async function writeTextDocument(doc, text, opts) {
     var pageW = opts.pageW;
     var pageH = opts.pageH;
@@ -458,7 +662,6 @@
       return;
     }
 
-    // Canvas path for CJK / mixed scripts — keeps glyphs visible
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var canvas = document.createElement("canvas");
     var ctx = canvas.getContext("2d");
@@ -492,11 +695,10 @@
       for (var l = 0; l < plines.length; l++) {
         var line = plines[l];
         newPageIfNeeded(lineHeight);
-        var cssH = lineHeight;
         canvas.width = Math.ceil(cssW * dpr);
-        canvas.height = Math.ceil(cssH * dpr);
+        canvas.height = Math.ceil(lineHeight * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, cssW, cssH);
+        ctx.clearRect(0, 0, cssW, lineHeight);
         ctx.font = fontSpec;
         ctx.fillStyle = "#111111";
         ctx.textBaseline = "top";
@@ -551,7 +753,7 @@
     }
 
     if (!window.jspdf || !window.PDFLib) {
-      toast("核心库未加载，请检查网络后刷新", true);
+      toast("核心库未加载，请确认 web/vendor 完整", true);
       return;
     }
 
@@ -626,7 +828,6 @@
     }
   }
 
-  // --- events ---
   dropzone.addEventListener("click", function () {
     fileInput.click();
   });

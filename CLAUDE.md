@@ -1,6 +1,6 @@
 # CLAUDE.md — KenEasy PDF Converter
 
-Browser-only drag-and-drop converter: Word / images / text → PDF, merge + reorder. No server upload.
+Browser-only drag-and-drop converter: Word / images / text → PDF, merge + reorder. No server upload. Offline vendor bundle.
 
 ## Project layout
 
@@ -9,20 +9,23 @@ web/
   index.html      # UI entry (static)
   styles.css
   app.js          # queue, convert, merge, download
-scratch/          # maintainer-only local scripts
-README.md         # Chinese product README
-README.en.md      # English README
+  vendor/         # offline JS libs + NOTICE.txt
+scratch/
+  fetch-vendor.ps1
+README.md
+README.en.md
 LICENSE
 ```
 
-Ship / host only the `web/` folder.
+Ship / host only the `web/` folder (includes `vendor/`).
 
 ## Product goals
 
 1. **Open a link → works** — static hosting, no install, no account
 2. **Local only** — files never leave the browser tab
 3. **Simple UX** — drag in → reorder → one PDF (or separate)
-4. **Small surface** — no build step for the shipped page
+4. **Offline-capable** — vendored deps under `web/vendor/`
+5. **Better Word** — mammoth HTML + html2canvas page slices (not raw text only)
 
 ## Hard rules (do not break)
 
@@ -31,42 +34,42 @@ Ship / host only the `web/` folder.
 3. **Do not `git init` in the parent workspace** — this folder is the git root
 4. **No backend / no file upload API** unless product direction explicitly changes
 5. Prefer small, layered changes; keep conversion logic in `web/app.js`
+6. Vendor pins are intentional — bump via `scratch/fetch-vendor.ps1` + retest
 
 ## Tech notes
 
 | Concern | Approach |
 | --- | --- |
-| Image / text PDF | jsPDF (CDN) |
-| Merge PDFs | pdf-lib (CDN) |
-| DOCX text | mammoth (CDN) |
-| Reorder UI | SortableJS (CDN) |
-| CJK text | canvas line raster → embed as image (Helvetica cannot draw CJK) |
-| Legacy `.doc` | Reject with message to resave as `.docx` |
-
-Pinned CDN versions live in `web/index.html` — bump deliberately and re-test.
+| Image PDF | jsPDF |
+| Merge PDFs | pdf-lib |
+| DOCX | mammoth `convertToHtml` + images as data URLs |
+| DOCX layout | html2canvas full render → slice by page height → jsPDF images |
+| Plain text | jsPDF vector (Latin) or canvas lines (CJK) |
+| Reorder UI | SortableJS |
+| Offline | local `web/vendor/*` only (no CDN at runtime) |
 
 ## Safe commit checklist
 
 ```text
 [ ] git status — no secrets / unexpected binaries
-[ ] Only intentional media tracked
-[ ] CDN version pins still intentional
-[ ] Version badge / README if releasing
+[ ] vendor/ complete (5 min js + NOTICE)
+[ ] index.html script tags match vendor filenames
+[ ] Version badges if releasing
 ```
 
 ## Daily workflow
 
 | Task | Path / command |
 | --- | --- |
-| Open project | this folder (`02-KenEasy-PDF-Converter`) |
+| Open project | this folder |
 | Local preview | `python -m http.server 5173 --directory web` |
+| Refresh vendors | `.\scratch\fetch-vendor.ps1` |
 | Deploy unit | `web/` directory only |
 | Workspace status | `..\scripts\status-all.ps1` |
-| Workspace backup | `..\scripts\backup-workspace.ps1` |
 
-## Out of scope (v0.1)
+## Out of scope (v0.2)
 
 - OCR for scanned images
-- Perfect Word layout fidelity / embedded fonts packaging
+- Perfect Word print fidelity / editable text layer for CJK Word pages
 - Server-side conversion
 - User accounts / cloud storage
