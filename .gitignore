@@ -1,0 +1,49 @@
+﻿# Secrets / credentials ??never commit
+*.pem
+*.p12
+*.key
+*.pfx
+*credentials*
+*secret*
+.env
+.env.*
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# Local media / recordings
+Screen Recording*.mp4
+*.local.mp4
+*.raw.mp4
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node (if used later)
+node_modules/
+dist/
+build/
+*.log
+
+# Temp
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Optional local notes
+TODO.local.md
+NOTES.local.md
