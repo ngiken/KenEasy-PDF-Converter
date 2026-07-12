@@ -66,21 +66,25 @@ python -m http.server 5173 --directory web
 .\scratch\fetch-vendor.ps1
 ```
 
+## 在线使用（打开链接就用）
+
+部署后的页面（GitHub Pages）：
+
+**https://ngiken.github.io/KenEasy-PDF-Converter/**
+
+说明：
+
+- 上面这个链接才是**转换器本身**
+- `https://github.com/ngiken/KenEasy-PDF-Converter` 只是**源代码仓库**，不是工具页面
+- 首次部署可能要等 1～2 分钟；若 404，稍后再刷新
+
+本地同样可以：`python -m http.server 5173 --directory web` → http://localhost:5173/
+
 ## 部署（有链接就能用）
 
-把 `web/` 目录发布到任意静态托管即可，例如：
+本仓库已配置 GitHub Actions：每次推送到 `main` 会自动把 `web/` 发布到 Pages。
 
-- GitHub Pages（Settings → Pages，根目录选 `web` 或把 `web` 内容放到 `/docs`）
-- Cloudflare Pages / Netlify / Vercel 静态站点
-- 任意 Nginx / OSS 静态桶
-
-没有服务端、没有 API、没有环境变量。
-
-**GitHub Pages 快速示例：**
-
-1. 仓库 Settings → Pages → Source: Deploy from a branch
-2. Branch: `main`，folder: `/ (root)` 时需把站点放到仓库根，或改用 Actions 发布 `web/`
-3. 更简单：把 `web/*` 复制到 `docs/` 并选 `/docs`
+也可把 `web/` 丢到任意静态托管（Cloudflare Pages / Netlify / Nginx / OSS）。没有服务端、没有 API、没有环境变量。
 
 ## 支持格式与限制
 

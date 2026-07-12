@@ -53,9 +53,11 @@ Refresh vendors:
 .\scratch\fetch-vendor.ps1
 ```
 
-## Deploy
+## Use online (just open the link)
 
-Publish the `web/` folder to any static host (GitHub Pages, Cloudflare Pages, Netlify, Nginx, etc.).
+**https://ngiken.github.io/KenEasy-PDF-Converter/**
+
+Note: the GitHub repo page is source code only, not the app. GitHub Actions deploys `web/` to Pages on every push to `main`.
 
 ## Limits
 
