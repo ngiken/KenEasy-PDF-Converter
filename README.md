@@ -23,7 +23,7 @@
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.2.1-27c499?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.2.2-27c499?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
@@ -54,6 +54,8 @@ KenEasy PDF Converter 是一个**纯前端**小工具：
 | 文本 / Markdown 转 PDF | 拖入 TXT / MD / CSV |
 | 多个 PDF 拼在一起 | 把 PDF 也丢进队列，按顺序合并 |
 | 隐私敏感文件 | 全程在本机浏览器完成，不经过服务器 |
+
+界面支持 **中文 / English** 一键切换（右上角），会记住你的选择；首次打开按浏览器语言自动选择。
 
 适合：交材料、发截图合集、临时把杂文件收成一个 PDF。
 

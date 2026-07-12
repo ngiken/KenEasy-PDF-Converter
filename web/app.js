@@ -10,8 +10,202 @@
   var MAX_FILES = 80;
   var MAX_FILE_BYTES = 40 * 1024 * 1024;
   var PT_TO_CSS_PX = 96 / 72;
+  var LANG_KEY = "keneasy-pdf-lang";
 
-  /** @type {{id:string,file:File,kind:string,name:string,size:number,previewUrl?:string,error?:string}[]} */
+  var I18N = {
+    zh: {
+      pageTitle: "KenEasy PDF Converter — 打开就能用的 PDF 转换器",
+      pageDesc:
+        "打开链接即可使用：拖入 Word、图片、文本转 PDF，排序合并，文件不离开本机。无需安装。",
+      tagline: "打开就能用 · 拖入 → 排序 → 一键 PDF · 文件不上传",
+      badgeNoInstall: "无需安装",
+      badgeLocal: "本地处理",
+      dropzoneAria: "拖入或点击选择要转换的文件",
+      dropTitle: "把文件拖到这里",
+      dropHint: "或点击选择 · 支持多选",
+      dropFormats:
+        "图片 PNG / JPG / WEBP / GIF / BMP · Word DOCX · 文本 TXT / MD / CSV · PDF（合并排序）",
+      optionsTitle: "选项",
+      optMerge: "全部合并成<strong>一个 PDF</strong>（按下方顺序；每个文件从新页开始）",
+      optKeepOrder: "按队列顺序输出（拖动手柄调整）",
+      optPageSize: "页面尺寸",
+      pageAuto: "按图片尺寸（仅图片）",
+      optImageFit: "图片适配",
+      fitContain: "完整放入（留白）",
+      fitCover: "铺满裁切",
+      fitStretch: "拉伸铺满",
+      optMargin: "页边距 (mm)",
+      optFilename: "输出文件名",
+      queueTitle: "文件队列",
+      btnClear: "清空",
+      btnConvert: "生成 PDF",
+      queueHint:
+        '按住手柄 <span class="handle-demo">⠿</span> 拖动可调整顺序。合并时从上到下就是 PDF 页序。',
+      emptyState: "还没有文件。拖入后会出现在这里。",
+      statusPreparing: "准备中…",
+      tipsTitle: "说明",
+      tip1: "转换在你的浏览器内存里完成，文件<strong>不会上传</strong>到任何服务器。",
+      tip2: "Word 仅支持 <code>.docx</code>。会尽量保留标题、段落、列表、表格、粗斜体与内嵌图片。",
+      tip3: "旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。",
+      tip4: "已有 PDF 可加入队列，用于排序后与其它文件合并。",
+      tip5: "依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。",
+      footerNote: "开源 · 纯前端 · 可离线",
+      maxFiles: "一次最多 {n} 个文件",
+      fileTooLarge: "{name} 超过 40MB，已跳过",
+      unsupportedDoc: "旧版 .doc 不支持，请另存为 .docx",
+      unsupportedFormat: "不支持的格式",
+      addedFiles: "已添加 {n} 个文件",
+      dragSort: "拖动排序",
+      unknownType: "未知类型",
+      remove: "移除",
+      removeAria: "移除 {name}",
+      cannotReadImage: "无法读取图片: {name}",
+      invalidImageSize: "图片尺寸无效",
+      html2canvasMissing: "html2canvas 未加载（离线包不完整）",
+      emptyDocument: "（空文档）",
+      mammothMissing: "Mammoth 未加载",
+      emptyFile: "（空文件）",
+      noConvertible: "没有可转换的文件",
+      coreMissing: "核心库未加载，请确认 web/vendor 完整",
+      converting: "正在转换…",
+      processing: "处理中 {i} / {n}",
+      generating: "生成下载…",
+      done: "完成",
+      downloaded: "已下载 {name}",
+      downloading: "下载中…",
+      downloadedMany: "已分别下载 {n} 个 PDF",
+      failed: "失败",
+      convertFailed: "转换失败",
+    },
+    en: {
+      pageTitle: "KenEasy PDF Converter — open and convert to PDF",
+      pageDesc:
+        "Open the link and convert: drop Word, images, or text into PDF, reorder and merge. Files never leave your browser. No install.",
+      tagline: "Open & go · drop → reorder → one PDF · no upload",
+      badgeNoInstall: "No install",
+      badgeLocal: "Local only",
+      dropzoneAria: "Drop or click to choose files to convert",
+      dropTitle: "Drop files here",
+      dropHint: "or click to choose · multi-select supported",
+      dropFormats:
+        "Images PNG / JPG / WEBP / GIF / BMP · Word DOCX · Text TXT / MD / CSV · PDF (merge & reorder)",
+      optionsTitle: "Options",
+      optMerge:
+        "Merge all into <strong>one PDF</strong> (queue order; each file starts on a new page)",
+      optKeepOrder: "Output in queue order (drag the handle to reorder)",
+      optPageSize: "Page size",
+      pageAuto: "Fit image size (images only)",
+      optImageFit: "Image fit",
+      fitContain: "Fit inside (letterbox)",
+      fitCover: "Fill & crop",
+      fitStretch: "Stretch to fill",
+      optMargin: "Margin (mm)",
+      optFilename: "Output filename",
+      queueTitle: "File queue",
+      btnClear: "Clear",
+      btnConvert: "Generate PDF",
+      queueHint:
+        'Hold the handle <span class="handle-demo">⠿</span> to drag and reorder. Top to bottom becomes page order when merging.',
+      emptyState: "No files yet. Drop some and they will show up here.",
+      statusPreparing: "Preparing…",
+      tipsTitle: "Notes",
+      tip1: "Conversion runs in your browser memory. Files are <strong>never uploaded</strong> to any server.",
+      tip2: "Word supports <code>.docx</code> only. Headings, paragraphs, lists, tables, emphasis, and embedded images are kept as much as possible.",
+      tip3: "Save legacy <code>.doc</code> as docx first. Headers/footers, text boxes, and complex floating images are simplified.",
+      tip4: "Existing PDFs can join the queue for reorder + merge with other files.",
+      tip5: "Libraries live in <code>web/vendor/</code>. You can run fully <strong>offline</strong> with a local static server (recommended: <code>python -m http.server</code>).",
+      footerNote: "Open source · frontend only · offline-ready",
+      maxFiles: "Up to {n} files at a time",
+      fileTooLarge: "{name} is over 40MB and was skipped",
+      unsupportedDoc: "Legacy .doc is not supported — save as .docx",
+      unsupportedFormat: "Unsupported format",
+      addedFiles: "Added {n} file(s)",
+      dragSort: "Drag to reorder",
+      unknownType: "unknown type",
+      remove: "Remove",
+      removeAria: "Remove {name}",
+      cannotReadImage: "Could not read image: {name}",
+      invalidImageSize: "Invalid image size",
+      html2canvasMissing: "html2canvas not loaded (offline bundle incomplete)",
+      emptyDocument: "(empty document)",
+      mammothMissing: "Mammoth not loaded",
+      emptyFile: "(empty file)",
+      noConvertible: "No convertible files",
+      coreMissing: "Core libraries missing — check web/vendor",
+      converting: "Converting…",
+      processing: "Processing {i} / {n}",
+      generating: "Preparing download…",
+      done: "Done",
+      downloaded: "Downloaded {name}",
+      downloading: "Downloading…",
+      downloadedMany: "Downloaded {n} PDF file(s)",
+      failed: "Failed",
+      convertFailed: "Conversion failed",
+    },
+  };
+
+  /** @type {"zh"|"en"} */
+  var lang = "zh";
+
+  function detectLang() {
+    try {
+      var saved = localStorage.getItem(LANG_KEY);
+      if (saved === "zh" || saved === "en") return saved;
+    } catch (_) {
+      /* ignore */
+    }
+    var nav = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+    return nav.indexOf("zh") === 0 ? "zh" : "en";
+  }
+
+  function t(key, vars) {
+    var dict = I18N[lang] || I18N.en;
+    var s = dict[key];
+    if (s == null) s = (I18N.en[key] != null ? I18N.en[key] : key);
+    if (vars) {
+      s = s.replace(/\{(\w+)\}/g, function (_, k) {
+        return vars[k] != null ? String(vars[k]) : "";
+      });
+    }
+    return s;
+  }
+
+  function applyStaticI18n() {
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+    document.title = t("pageTitle");
+    var desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute("content", t("pageDesc"));
+
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+      el.innerHTML = t(el.getAttribute("data-i18n-html"));
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach(function (el) {
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label")));
+    });
+
+    var zhBtn = $("langZh");
+    var enBtn = $("langEn");
+    if (zhBtn) zhBtn.setAttribute("aria-pressed", lang === "zh" ? "true" : "false");
+    if (enBtn) enBtn.setAttribute("aria-pressed", lang === "en" ? "true" : "false");
+  }
+
+  function setLang(next) {
+    if (next !== "zh" && next !== "en") return;
+    if (next === lang) return;
+    lang = next;
+    try {
+      localStorage.setItem(LANG_KEY, lang);
+    } catch (_) {
+      /* ignore */
+    }
+    applyStaticI18n();
+    renderList();
+  }
+
+  /** @type {{id:string,file:File,kind:string,name:string,size:number,previewUrl?:string,error?:string,errorKey?:string}[]} */
   var items = [];
   var converting = false;
   var sortable = null;
@@ -97,6 +291,12 @@
     return kind === "image" || kind === "docx" || kind === "text" || kind === "pdf";
   }
 
+  function itemErrorText(item) {
+    if (item.errorKey === "unsupportedDoc") return t("unsupportedDoc");
+    if (item.errorKey === "unsupportedFormat") return t("unsupportedFormat");
+    return item.error || "";
+  }
+
   function addFiles(fileListLike) {
     var incoming = Array.from(fileListLike || []);
     if (!incoming.length) return;
@@ -105,11 +305,11 @@
     for (var i = 0; i < incoming.length; i++) {
       var file = incoming[i];
       if (items.length >= MAX_FILES) {
-        toast("一次最多 " + MAX_FILES + " 个文件", true);
+        toast(t("maxFiles", { n: MAX_FILES }), true);
         break;
       }
       if (file.size > MAX_FILE_BYTES) {
-        toast(file.name + " 超过 40MB，已跳过", true);
+        toast(t("fileTooLarge", { name: file.name }), true);
         continue;
       }
       var kind = detectKind(file);
@@ -119,12 +319,11 @@
         kind: kind,
         name: file.name,
         size: file.size,
+        isNew: true,
       };
       if (!isConvertible(kind)) {
-        item.error =
-          kind === "unsupported-doc"
-            ? "旧版 .doc 不支持，请另存为 .docx"
-            : "不支持的格式";
+        item.errorKey = kind === "unsupported-doc" ? "unsupportedDoc" : "unsupportedFormat";
+        item.error = itemErrorText(item);
       }
       if (kind === "image") {
         try {
@@ -138,19 +337,36 @@
     }
     if (added) {
       renderList();
-      toast("已添加 " + added + " 个文件");
+      toast(t("addedFiles", { n: added }));
     }
   }
 
   function removeItem(id) {
-    var idx = items.findIndex(function (x) {
-      return x.id === id;
-    });
-    if (idx < 0) return;
-    var it = items[idx];
-    if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
-    items.splice(idx, 1);
-    renderList();
+    var li = fileList.querySelector('[data-id="' + id + '"]');
+    if (li) {
+      li.classList.add("removing");
+      var removed = false;
+      var triggerRemove = function () {
+        if (removed) return;
+        removed = true;
+        doRemove();
+      };
+      li.addEventListener("animationend", triggerRemove, { once: true });
+      setTimeout(triggerRemove, 360);
+    } else {
+      doRemove();
+    }
+
+    function doRemove() {
+      var idx = items.findIndex(function (x) {
+        return x.id === id;
+      });
+      if (idx < 0) return;
+      var it = items[idx];
+      if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
+      items.splice(idx, 1);
+      renderList();
+    }
   }
 
   function clearAll() {
@@ -185,20 +401,28 @@
     fileList.hidden = !has;
     btnClear.disabled = !has || converting;
     var okCount = items.filter(function (x) {
-      return isConvertible(x.kind) && !x.error;
+      return isConvertible(x.kind) && !x.errorKey;
     }).length;
     btnConvert.disabled = okCount === 0 || converting;
 
     fileList.innerHTML = "";
+    var newIdx = 0;
     for (var i = 0; i < items.length; i++) {
       var it = items[i];
       var li = document.createElement("li");
-      li.className = "file-item" + (it.error ? " error" : "");
+      li.className = "file-item" + (it.errorKey || it.error ? " error" : "");
       li.dataset.id = it.id;
+
+      if (it.isNew) {
+        li.classList.add("new-item");
+        li.style.animationDelay = newIdx * 55 + "ms";
+        newIdx++;
+        delete it.isNew;
+      }
 
       var handle = document.createElement("div");
       handle.className = "handle";
-      handle.title = "拖动排序";
+      handle.title = t("dragSort");
       handle.textContent = "⠿";
 
       var thumb = document.createElement("div");
@@ -220,21 +444,21 @@
       name.title = it.name;
       var sub = document.createElement("div");
       sub.className = "sub";
-      sub.textContent = it.error
-        ? it.error
-        : formatBytes(it.size) + " · " + (it.file.type || "未知类型");
+      sub.textContent = it.errorKey
+        ? itemErrorText(it)
+        : formatBytes(it.size) + " · " + (it.file.type || t("unknownType"));
       meta.appendChild(name);
       meta.appendChild(sub);
 
       var kindEl = document.createElement("span");
-      kindEl.className = "kind " + (it.error ? "unknown" : it.kind);
+      kindEl.className = "kind " + (it.errorKey || it.error ? "unknown" : it.kind);
       kindEl.textContent = kindLabel(it.kind);
 
       var del = document.createElement("button");
       del.type = "button";
       del.className = "icon-btn";
-      del.title = "移除";
-      del.setAttribute("aria-label", "移除 " + it.name);
+      del.title = t("remove");
+      del.setAttribute("aria-label", t("removeAria", { name: it.name }));
       del.textContent = "×";
       del.addEventListener(
         "click",
@@ -301,7 +525,7 @@
       };
       img.onerror = function () {
         URL.revokeObjectURL(url);
-        reject(new Error("无法读取图片: " + file.name));
+        reject(new Error(t("cannotReadImage", { name: file.name })));
       };
       img.src = url;
     });
@@ -311,7 +535,7 @@
     var canvas = document.createElement("canvas");
     canvas.width = img.naturalWidth || img.width;
     canvas.height = img.naturalHeight || img.height;
-    if (!canvas.width || !canvas.height) throw new Error("图片尺寸无效");
+    if (!canvas.width || !canvas.height) throw new Error(t("invalidImageSize"));
     var ctx = canvas.getContext("2d");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -390,7 +614,7 @@
    */
   async function writeHtmlDocument(doc, html, opts) {
     if (!window.html2canvas) {
-      throw new Error("html2canvas 未加载（离线包不完整）");
+      throw new Error(t("html2canvasMissing"));
     }
 
     var pageW = opts.pageW;
@@ -440,7 +664,7 @@
 
     var root = document.createElement("div");
     root.className = "ke-docx-root";
-    root.innerHTML = html && html.trim() ? html : "<p>（空文档）</p>";
+    root.innerHTML = html && html.trim() ? html : "<p>" + t("emptyDocument") + "</p>";
 
     host.appendChild(style);
     host.appendChild(root);
@@ -572,7 +796,7 @@
     var doc2 = new jsPDF({ unit: "pt", format: [pageW2, pageH2], compress: true });
 
     if (item.kind === "docx") {
-      if (!window.mammoth) throw new Error("Mammoth 未加载");
+      if (!window.mammoth) throw new Error(t("mammothMissing"));
       var ab = await readAsArrayBuffer(item.file);
       var result = await window.mammoth.convertToHtml(
         { arrayBuffer: ab },
@@ -610,7 +834,7 @@
     // plain text
     var text = await readAsText(item.file);
     text = (text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-    if (!text.trim()) text = "（空文件）";
+    if (!text.trim()) text = t("emptyFile");
 
     await writeTextDocument(doc2, text, {
       pageW: pageW2,
@@ -745,22 +969,22 @@
     if (converting) return;
     syncOrderFromDom();
     var queue = items.filter(function (x) {
-      return isConvertible(x.kind) && !x.error;
+      return isConvertible(x.kind) && !x.errorKey;
     });
     if (!queue.length) {
-      toast("没有可转换的文件", true);
+      toast(t("noConvertible"), true);
       return;
     }
 
     if (!window.jspdf || !window.PDFLib) {
-      toast("核心库未加载，请确认 web/vendor 完整", true);
+      toast(t("coreMissing"), true);
       return;
     }
 
     converting = true;
     btnConvert.disabled = true;
     btnClear.disabled = true;
-    setStatus(true, "正在转换…", 0, "");
+    setStatus(true, t("converting"), 0, "");
 
     var options = {
       merge: $("optMerge").checked,
@@ -776,7 +1000,7 @@
         var it = queue[i];
         setStatus(
           true,
-          "处理中 " + (i + 1) + " / " + queue.length,
+          t("processing", { i: i + 1, n: queue.length }),
           (i / queue.length) * 90,
           it.name
         );
@@ -787,7 +1011,7 @@
         });
       }
 
-      setStatus(true, "生成下载…", 95, "");
+      setStatus(true, t("generating"), 95, "");
 
       if (options.merge || pdfParts.length === 1) {
         var finalBytes;
@@ -802,26 +1026,26 @@
         }
         var blob = new Blob([finalBytes], { type: "application/pdf" });
         downloadBlob(blob, options.filename + ".pdf");
-        setStatus(true, "完成", 100, "已下载 " + options.filename + ".pdf");
-        toast("已下载 " + options.filename + ".pdf");
+        setStatus(true, t("done"), 100, t("downloaded", { name: options.filename + ".pdf" }));
+        toast(t("downloaded", { name: options.filename + ".pdf" }));
       } else {
         for (var j = 0; j < pdfParts.length; j++) {
           var p = pdfParts[j];
           var base = p.name.replace(/\.[^.]+$/, "") || "file-" + (j + 1);
           var fname = sanitizeFilename(base) + ".pdf";
           downloadBlob(new Blob([p.bytes], { type: "application/pdf" }), fname);
-          setStatus(true, "下载中…", 95 + (j / pdfParts.length) * 5, fname);
+          setStatus(true, t("downloading"), 95 + (j / pdfParts.length) * 5, fname);
           await new Promise(function (r) {
             setTimeout(r, 350);
           });
         }
-        setStatus(true, "完成", 100, "已分别下载 " + pdfParts.length + " 个 PDF");
-        toast("已分别下载 " + pdfParts.length + " 个 PDF");
+        setStatus(true, t("done"), 100, t("downloadedMany", { n: pdfParts.length }));
+        toast(t("downloadedMany", { n: pdfParts.length }));
       }
     } catch (err) {
       console.error(err);
-      setStatus(true, "失败", 0, (err && err.message) || String(err));
-      toast((err && err.message) || "转换失败", true);
+      setStatus(true, t("failed"), 0, (err && err.message) || String(err));
+      toast((err && err.message) || t("convertFailed"), true);
     } finally {
       converting = false;
       renderList();
@@ -872,5 +1096,20 @@
   btnClear.addEventListener("click", clearAll);
   btnConvert.addEventListener("click", convertAll);
 
+  var langZh = $("langZh");
+  var langEn = $("langEn");
+  if (langZh) {
+    langZh.addEventListener("click", function () {
+      setLang("zh");
+    });
+  }
+  if (langEn) {
+    langEn.addEventListener("click", function () {
+      setLang("en");
+    });
+  }
+
+  lang = detectLang();
+  applyStaticI18n();
   renderList();
 })();

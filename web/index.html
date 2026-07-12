@@ -15,12 +15,18 @@
         <div class="logo" aria-hidden="true">PDF</div>
         <div>
           <h1>KenEasy PDF Converter</h1>
-          <p class="tagline">打开就能用 · 拖入 → 排序 → 一键 PDF · 文件不上传</p>
+          <p class="tagline" data-i18n="tagline">打开就能用 · 拖入 → 排序 → 一键 PDF · 文件不上传</p>
         </div>
       </div>
-      <div class="header-badges">
-        <span class="badge">无需安装</span>
-        <span class="badge badge-blue">本地处理</span>
+      <div class="header-actions">
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang="zh" id="langZh" aria-pressed="true">中文</button>
+          <button type="button" class="lang-btn" data-lang="en" id="langEn" aria-pressed="false">EN</button>
+        </div>
+        <div class="header-badges">
+          <span class="badge" data-i18n="badgeNoInstall">无需安装</span>
+          <span class="badge badge-blue" data-i18n="badgeLocal">本地处理</span>
+        </div>
       </div>
     </header>
 
@@ -30,13 +36,14 @@
         class="dropzone"
         tabindex="0"
         role="button"
+        data-i18n-aria-label="dropzoneAria"
         aria-label="拖入或点击选择要转换的文件"
       >
         <div class="dropzone-inner">
           <div class="drop-icon" aria-hidden="true">↓</div>
-          <h2>把文件拖到这里</h2>
-          <p>或点击选择 · 支持多选</p>
-          <p class="formats">
+          <h2 data-i18n="dropTitle">把文件拖到这里</h2>
+          <p data-i18n="dropHint">或点击选择 · 支持多选</p>
+          <p class="formats" data-i18n="dropFormats">
             图片 PNG / JPG / WEBP / GIF / BMP · Word DOCX · 文本 TXT / MD / CSV · PDF（合并排序）
           </p>
         </div>
@@ -50,38 +57,38 @@
       </section>
 
       <section class="panel options-panel">
-        <h3>选项</h3>
+        <h3 data-i18n="optionsTitle">选项</h3>
         <div class="options-grid">
           <label class="check">
             <input type="checkbox" id="optMerge" checked>
-            <span>全部合并成<strong>一个 PDF</strong>（按下方顺序；每个文件从新页开始）</span>
+            <span data-i18n-html="optMerge">全部合并成<strong>一个 PDF</strong>（按下方顺序；每个文件从新页开始）</span>
           </label>
           <label class="check">
             <input type="checkbox" id="optKeepOrder" checked disabled>
-            <span>按队列顺序输出（拖动手柄调整）</span>
+            <span data-i18n="optKeepOrder">按队列顺序输出（拖动手柄调整）</span>
           </label>
           <label class="field">
-            <span>页面尺寸</span>
+            <span data-i18n="optPageSize">页面尺寸</span>
             <select id="optPageSize">
               <option value="a4" selected>A4</option>
               <option value="letter">Letter</option>
-              <option value="auto">按图片尺寸（仅图片）</option>
+              <option value="auto" data-i18n="pageAuto">按图片尺寸（仅图片）</option>
             </select>
           </label>
           <label class="field">
-            <span>图片适配</span>
+            <span data-i18n="optImageFit">图片适配</span>
             <select id="optImageFit">
-              <option value="contain" selected>完整放入（留白）</option>
-              <option value="cover">铺满裁切</option>
-              <option value="stretch">拉伸铺满</option>
+              <option value="contain" selected data-i18n="fitContain">完整放入（留白）</option>
+              <option value="cover" data-i18n="fitCover">铺满裁切</option>
+              <option value="stretch" data-i18n="fitStretch">拉伸铺满</option>
             </select>
           </label>
           <label class="field">
-            <span>页边距 (mm)</span>
+            <span data-i18n="optMargin">页边距 (mm)</span>
             <input type="number" id="optMargin" min="0" max="40" step="1" value="12">
           </label>
           <label class="field">
-            <span>输出文件名</span>
+            <span data-i18n="optFilename">输出文件名</span>
             <input type="text" id="optFilename" value="converted" placeholder="converted" autocomplete="off">
           </label>
         </div>
@@ -89,20 +96,20 @@
 
       <section class="panel list-panel">
         <div class="list-head">
-          <h3>文件队列 <span id="fileCount" class="muted">0</span></h3>
+          <h3><span data-i18n="queueTitle">文件队列</span> <span id="fileCount" class="muted">0</span></h3>
           <div class="list-actions">
-            <button type="button" id="btnClear" class="btn ghost" disabled>清空</button>
-            <button type="button" id="btnConvert" class="btn primary" disabled>生成 PDF</button>
+            <button type="button" id="btnClear" class="btn ghost" disabled data-i18n="btnClear">清空</button>
+            <button type="button" id="btnConvert" class="btn primary" disabled data-i18n="btnConvert">生成 PDF</button>
           </div>
         </div>
-        <p class="hint">按住手柄 <span class="handle-demo">⠿</span> 拖动可调整顺序。合并时从上到下就是 PDF 页序。</p>
+        <p class="hint" data-i18n-html="queueHint">按住手柄 <span class="handle-demo">⠿</span> 拖动可调整顺序。合并时从上到下就是 PDF 页序。</p>
         <ul id="fileList" class="file-list" aria-live="polite"></ul>
-        <div id="emptyState" class="empty-state">还没有文件。拖入后会出现在这里。</div>
+        <div id="emptyState" class="empty-state" data-i18n="emptyState">还没有文件。拖入后会出现在这里。</div>
       </section>
 
       <section class="panel status-panel" id="statusPanel" hidden>
         <div class="status-row">
-          <div id="statusText" class="status-text">准备中…</div>
+          <div id="statusText" class="status-text" data-i18n="statusPreparing">准备中…</div>
           <div id="statusPct" class="status-pct">0%</div>
         </div>
         <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
@@ -110,20 +117,20 @@
       </section>
 
       <section class="panel tips-panel">
-        <h3>说明</h3>
+        <h3 data-i18n="tipsTitle">说明</h3>
         <ul class="tips">
-          <li>转换在你的浏览器内存里完成，文件<strong>不会上传</strong>到任何服务器。</li>
-          <li>Word 仅支持 <code>.docx</code>。会尽量保留标题、段落、列表、表格、粗斜体与内嵌图片。</li>
-          <li>旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。</li>
-          <li>已有 PDF 可加入队列，用于排序后与其它文件合并。</li>
-          <li>依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。</li>
+          <li data-i18n-html="tip1">转换在你的浏览器内存里完成，文件<strong>不会上传</strong>到任何服务器。</li>
+          <li data-i18n-html="tip2">Word 仅支持 <code>.docx</code>。会尽量保留标题、段落、列表、表格、粗斜体与内嵌图片。</li>
+          <li data-i18n-html="tip3">旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。</li>
+          <li data-i18n="tip4">已有 PDF 可加入队列，用于排序后与其它文件合并。</li>
+          <li data-i18n-html="tip5">依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。</li>
         </ul>
       </section>
     </main>
 
     <footer class="footer">
       <span>KenEasy PDF Converter · MIT</span>
-      <span class="muted">开源 · 纯前端 · 可离线</span>
+      <span class="muted" data-i18n="footerNote">开源 · 纯前端 · 可离线</span>
     </footer>
   </div>
 
