@@ -1,0 +1,4 @@
+# Optional local helpers (tracked intentionally small)
+
+# From project root:
+#   python -m http.server 5173 --directory web
