@@ -31,9 +31,9 @@
       optPageSize: "页面尺寸",
       pageAuto: "按图片尺寸（仅图片）",
       optImageFit: "图片适配",
-      fitContain: "完整放入（留白）",
-      fitCover: "铺满裁切",
-      fitStretch: "拉伸铺满",
+      fitContain: "完整放入（可留白，遵循页边距）",
+      fitCover: "铺满裁切（无白边，可能裁切）",
+      fitStretch: "拉伸铺满（无白边，可能变形）",
       optMargin: "页边距 (mm)",
       optFilename: "输出文件名",
       queueTitle: "文件队列",
@@ -49,6 +49,7 @@
       tip3: "旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。",
       tip4: "已有 PDF 可加入队列，用于排序后与其它文件合并。",
       tip5: "依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。",
+      tip6: "图片适配：<strong>铺满裁切 / 拉伸铺满</strong>会铺满整页且无白边（忽略页边距）；只有「完整放入」会留白并使用页边距。",
       footerNote: "开源 · 纯前端 · 可离线",
       maxFiles: "一次最多 {n} 个文件",
       fileTooLarge: "{name} 超过 40MB，已跳过",
@@ -96,9 +97,9 @@
       optPageSize: "Page size",
       pageAuto: "Fit image size (images only)",
       optImageFit: "Image fit",
-      fitContain: "Fit inside (letterbox)",
-      fitCover: "Fill & crop",
-      fitStretch: "Stretch to fill",
+      fitContain: "Fit inside (letterbox, uses margin)",
+      fitCover: "Fill & crop (no border, may crop)",
+      fitStretch: "Stretch to fill (no border, may distort)",
       optMargin: "Margin (mm)",
       optFilename: "Output filename",
       queueTitle: "File queue",
@@ -114,6 +115,7 @@
       tip3: "Save legacy <code>.doc</code> as docx first. Headers/footers, text boxes, and complex floating images are simplified.",
       tip4: "Existing PDFs can join the queue for reorder + merge with other files.",
       tip5: "Libraries live in <code>web/vendor/</code>. You can run fully <strong>offline</strong> with a local static server (recommended: <code>python -m http.server</code>).",
+      tip6: "Image fit: <strong>Fill & crop / Stretch</strong> cover the full page with no white border (margin ignored). Only “Fit inside” letterboxes and uses margin.",
       footerNote: "Open source · frontend only · offline-ready",
       maxFiles: "Up to {n} files at a time",
       fileTooLarge: "{name} is over 40MB and was skipped",
@@ -543,14 +545,51 @@
     return canvas.toDataURL("image/jpeg", 0.92);
   }
 
-  function fitRect(srcW, srcH, boxW, boxH, mode) {
-    if (mode === "stretch") {
-      return { x: 0, y: 0, w: boxW, h: boxH };
+  /**
+   * Cover crop: take the largest centered source rect matching target aspect,
+   * then rasterize. Drawing that bitmap to the full page box fills with no letterbox.
+   */
+  function imageToCoverDataUrl(img, boxAspect) {
+    var iw = img.naturalWidth || img.width;
+    var ih = img.naturalHeight || img.height;
+    if (!iw || !ih) throw new Error(t("invalidImageSize"));
+    var aspect = boxAspect > 0 ? boxAspect : iw / ih;
+    var srcAspect = iw / ih;
+    var sx = 0;
+    var sy = 0;
+    var sw = iw;
+    var sh = ih;
+    if (srcAspect > aspect) {
+      // wider than target — crop left/right
+      sw = ih * aspect;
+      sx = (iw - sw) / 2;
+    } else {
+      // taller than target — crop top/bottom
+      sh = iw / aspect;
+      sy = (ih - sh) / 2;
     }
-    var scale =
-      mode === "cover"
-        ? Math.max(boxW / srcW, boxH / srcH)
-        : Math.min(boxW / srcW, boxH / srcH);
+    // Keep output resolution close to source crop, capped for memory
+    var maxSide = 4096;
+    var outW = Math.max(1, Math.round(sw));
+    var outH = Math.max(1, Math.round(sh));
+    if (outW > maxSide || outH > maxSide) {
+      var s = maxSide / Math.max(outW, outH);
+      outW = Math.max(1, Math.round(outW * s));
+      outH = Math.max(1, Math.round(outH * s));
+    }
+    var canvas = document.createElement("canvas");
+    canvas.width = outW;
+    canvas.height = outH;
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, outW, outH);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+    return canvas.toDataURL("image/jpeg", 0.92);
+  }
+
+  /** Contain (letterbox) placement inside a content box. */
+  function fitContainRect(srcW, srcH, boxW, boxH) {
+    var scale = Math.min(boxW / srcW, boxH / srcH);
     var w = srcW * scale;
     var h = srcH * scale;
     return {
@@ -559,6 +598,32 @@
       w: w,
       h: h,
     };
+  }
+
+  /**
+   * Place an image on a PDF page.
+   * - contain: keep aspect, may letterbox; respects margin
+   * - cover: full-bleed crop to page (ignores margin so no white border)
+   * - stretch: full-bleed stretch to page (ignores margin; may distort)
+   */
+  function addImageToPage(doc, img, pageW, pageH, margin, mode) {
+    var fit = mode || "contain";
+    if (fit === "cover" || fit === "stretch") {
+      // Full page fill — no white edge from page margin
+      var dataUrl =
+        fit === "cover"
+          ? imageToCoverDataUrl(img, pageW / pageH)
+          : imageToDataUrl(img);
+      doc.addImage(dataUrl, "JPEG", 0, 0, pageW, pageH);
+      return;
+    }
+    // contain
+    var boxW = Math.max(pageW - margin * 2, 10);
+    var boxH = Math.max(pageH - margin * 2, 10);
+    var iw = img.naturalWidth || img.width;
+    var ih = img.naturalHeight || img.height;
+    var r = fitContainRect(iw, ih, boxW, boxH);
+    doc.addImage(imageToDataUrl(img), "JPEG", margin + r.x, margin + r.y, r.w, r.h);
   }
 
   function waitForImages(root) {
@@ -757,13 +822,13 @@
 
     if (item.kind === "image") {
       var img = await loadImage(item.file);
-      var dataUrl = imageToDataUrl(img);
       var iw = img.naturalWidth || img.width;
       var ih = img.naturalHeight || img.height;
 
       var pageW;
       var pageH;
       if (pageSizeKey === "auto") {
+        // Page matches image aspect so contain/cover/stretch all fill naturally
         var scale = 72 / 96;
         pageW = Math.max(iw * scale, 72);
         pageH = Math.max(ih * scale, 72);
@@ -784,10 +849,7 @@
         compress: true,
       });
 
-      var boxW = Math.max(pageW - margin * 2, 10);
-      var boxH = Math.max(pageH - margin * 2, 10);
-      var r = fitRect(iw, ih, boxW, boxH, options.imageFit);
-      doc.addImage(dataUrl, "JPEG", margin + r.x, margin + r.y, r.w, r.h);
+      addImageToPage(doc, img, pageW, pageH, margin, options.imageFit);
       return new Uint8Array(doc.output("arraybuffer"));
     }
 

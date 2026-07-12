@@ -23,7 +23,7 @@
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.2.3-27c499?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.2.4-27c499?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
@@ -140,6 +140,10 @@ scratch/             ← 维护脚本
 
 ## 更新说明
 
+### v0.2.4
+- **修复图片适配白边**：选择「铺满裁切 / 拉伸铺满」时真正整页铺满，不再被页边距挤出白边
+- **修复铺满裁切**：按页面比例居中裁切源图，避免只放大却仍留白、或错误压扁
+- **文案更清楚**：选项说明区分「完整放入（可留白）」与「无白边」两种铺满模式
 ### v0.2.3
 - **中英双语界面**：右上角一键切换，记住选择；首次按浏览器语言
 - **体验优化**：文案与提示更完整，语言切换后队列/错误信息同步更新

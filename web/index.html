@@ -78,9 +78,9 @@
           <label class="field">
             <span data-i18n="optImageFit">图片适配</span>
             <select id="optImageFit">
-              <option value="contain" selected data-i18n="fitContain">完整放入（留白）</option>
-              <option value="cover" data-i18n="fitCover">铺满裁切</option>
-              <option value="stretch" data-i18n="fitStretch">拉伸铺满</option>
+              <option value="contain" selected data-i18n="fitContain">完整放入（可留白，遵循页边距）</option>
+              <option value="cover" data-i18n="fitCover">铺满裁切（无白边，可能裁切）</option>
+              <option value="stretch" data-i18n="fitStretch">拉伸铺满（无白边，可能变形）</option>
             </select>
           </label>
           <label class="field">
@@ -124,6 +124,7 @@
           <li data-i18n-html="tip3">旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。</li>
           <li data-i18n="tip4">已有 PDF 可加入队列，用于排序后与其它文件合并。</li>
           <li data-i18n-html="tip5">依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。</li>
+          <li data-i18n-html="tip6">图片适配：<strong>铺满裁切 / 拉伸铺满</strong>会铺满整页且无白边（忽略页边距）；只有「完整放入」会留白并使用页边距。</li>
         </ul>
       </section>
     </main>

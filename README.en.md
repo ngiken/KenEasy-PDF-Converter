@@ -23,7 +23,7 @@ Everything runs in your browser. **No upload. No install. No account.**
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/use%20online-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.2.3-27c499?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.2.4-27c499?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
@@ -96,6 +96,10 @@ Open <http://localhost:5173/>. Vendored libs live in `web/vendor/` for offline u
 
 ## Changelog
 
+### v0.2.4
+- **Fix image fit white borders**: Fill & crop / Stretch now truly cover the full page (page margin no longer forces a white frame)
+- **Fix cover mode**: center-crop source to page aspect instead of scaling with leftover letterboxing / wrong squash
+- **Clearer labels**: distinguish letterbox vs full-bleed modes
 ### v0.2.3
 - **Bilingual UI (中文 / English)** with header switcher; remembers choice; first visit follows browser language
 - **Polish**: clearer copy and toasts; queue/error strings update when language changes
