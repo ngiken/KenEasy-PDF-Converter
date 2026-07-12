@@ -1128,31 +1128,63 @@
     fileInput.value = "";
   });
 
-  ["dragenter", "dragover"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.add("dragover");
-    });
+  // Drag highlight: count enter/leave so child nodes don't leave the blue state stuck.
+  var dragDepth = 0;
+  function setDropHighlight(on) {
+    dropzone.classList.toggle("dragover", !!on);
+  }
+  function clearDropHighlight() {
+    dragDepth = 0;
+    setDropHighlight(false);
+  }
+
+  dropzone.addEventListener("dragenter", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth++;
+    setDropHighlight(true);
   });
-  ["dragleave", "drop"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (ev === "drop") {
-        dropzone.classList.remove("dragover");
-        addFiles(e.dataTransfer.files);
-      } else if (e.target === dropzone) {
-        dropzone.classList.remove("dragover");
-      }
-    });
+  dropzone.addEventListener("dragover", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Some browsers skip a matching enter; keep highlight while over the zone
+    if (dragDepth === 0) dragDepth = 1;
+    setDropHighlight(true);
+  });
+  dropzone.addEventListener("dragleave", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only clear when leaving the dropzone tree (not when moving between children)
+    var related = e.relatedTarget;
+    if (related && dropzone.contains(related)) {
+      return;
+    }
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) setDropHighlight(false);
+  });
+  dropzone.addEventListener("drop", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    clearDropHighlight();
+    addFiles(e.dataTransfer.files);
   });
 
   window.addEventListener("dragover", function (e) {
     e.preventDefault();
   });
+  // Drop/cancel outside the zone must also clear the blue state
   window.addEventListener("drop", function (e) {
     e.preventDefault();
+    clearDropHighlight();
+  });
+  window.addEventListener("dragend", function () {
+    clearDropHighlight();
+  });
+  // Leaving the browser window often reports relatedTarget === null
+  document.addEventListener("dragleave", function (e) {
+    if (e.relatedTarget == null || e.clientX <= 0 || e.clientY <= 0) {
+      clearDropHighlight();
+    }
   });
 
   btnClear.addEventListener("click", clearAll);
