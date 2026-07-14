@@ -50,3 +50,6 @@ scratch/release/
 # Optional local notes
 TODO.local.md
 NOTES.local.md
+
+# E2E generated downloads and temporary tour frames
+scratch/e2e/out/

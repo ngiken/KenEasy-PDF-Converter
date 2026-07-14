@@ -1,178 +1,177 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KenEasy PDF Converter — 打开就能用的 PDF 转换器</title>
-  <meta name="description" content="打开链接即可使用：拖入 Word、图片、文本转 PDF，排序合并，文件不离开本机。无需安装。">
-  <meta name="theme-color" content="#101114">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>KenEasy PDF Converter — 本地 Word、图片与文本转 PDF</title>
+  <meta name="description" content="拖入 Word、图片、文本或已有 PDF，在浏览器本地排序、转换与合并。无需安装、无需上传、无需注册。">
+  <meta name="theme-color" content="#f5f5f7">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <link rel="stylesheet" href="styles.css?v=0.3.0">
 </head>
 <body>
-  <div class="app">
-    <header class="header">
-      <div class="brand">
-        <div class="logo" aria-hidden="true">PDF</div>
-        <div>
-          <h1>KenEasy PDF Converter</h1>
-          <p class="tagline" data-i18n="tagline">打开就能用 · 拖入 → 排序 → 一键 PDF · 文件不上传</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <div class="header-top-row">
-          <a
-            class="github-link"
-            href="https://github.com/ngiken/KenEasy-PDF-Converter"
-            target="_blank"
-            rel="noopener noreferrer"
-            data-i18n-aria-label="githubAria"
-            aria-label="在 GitHub 打开本项目，欢迎 Star"
-          >
-            <span class="github-ico" aria-hidden="true">★</span>
-            <span data-i18n="githubBtn">GitHub</span>
-          </a>
-          <div class="lang-switch" role="group" aria-label="Language">
-            <button type="button" class="lang-btn" data-lang="zh" id="langZh" aria-pressed="true">中文</button>
-            <button type="button" class="lang-btn" data-lang="en" id="langEn" aria-pressed="false">EN</button>
-          </div>
-        </div>
-        <div class="header-badges">
-          <span class="badge" data-i18n="badgeNoInstall">无需安装</span>
-          <span class="badge badge-blue" data-i18n="badgeLocal">本地处理</span>
-        </div>
-      </div>
-    </header>
-
-    <main class="main">
-      <section
-        id="dropzone"
-        class="dropzone"
-        tabindex="0"
-        role="button"
-        data-i18n-aria-label="dropzoneAria"
-        aria-label="拖入或点击选择要转换的文件"
-      >
-        <div class="dropzone-inner">
-          <div class="drop-icon" aria-hidden="true">↓</div>
-          <h2 data-i18n="dropTitle">把文件拖到这里</h2>
-          <p data-i18n="dropHint">或点击选择 · 支持多选</p>
-          <p class="formats" data-i18n="dropFormats">
-            图片 PNG / JPG / WEBP / GIF / BMP · Word DOCX · 文本 TXT / MD / CSV · PDF（合并排序）
-          </p>
-        </div>
-        <input
-          id="fileInput"
-          type="file"
-          multiple
-          accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.docx,.txt,.md,.csv,.pdf,image/*,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          hidden
-        >
-      </section>
-
-      <section class="panel options-panel">
-        <h3 data-i18n="optionsTitle">选项</h3>
-        <div class="options-grid">
-          <label class="check">
-            <input type="checkbox" id="optMerge" checked>
-            <span data-i18n-html="optMerge">全部合并成<strong>一个 PDF</strong>（按下方顺序；每个文件从新页开始）</span>
-          </label>
-          <label class="check">
-            <input type="checkbox" id="optKeepOrder" checked disabled>
-            <span data-i18n="optKeepOrder">按队列顺序输出（拖动手柄调整）</span>
-          </label>
-          <label class="field">
-            <span data-i18n="optPageSize">页面尺寸</span>
-            <select id="optPageSize">
-              <option value="a4" selected>A4</option>
-              <option value="letter">Letter</option>
-              <option value="auto" data-i18n="pageAuto">按图片尺寸（仅图片）</option>
-            </select>
-          </label>
-          <label class="field">
-            <span data-i18n="optImageFit">图片适配</span>
-            <select id="optImageFit">
-              <option value="contain" selected data-i18n="fitContain">完整放入（可留白，遵循页边距）</option>
-              <option value="cover" data-i18n="fitCover">铺满裁切（无白边，可能裁切）</option>
-              <option value="stretch" data-i18n="fitStretch">拉伸铺满（无白边，可能变形）</option>
-            </select>
-          </label>
-          <label class="field">
-            <span data-i18n="optMargin">页边距 (mm)</span>
-            <input type="number" id="optMargin" min="0" max="40" step="1" value="12">
-          </label>
-          <label class="field">
-            <span data-i18n="optFilename">输出文件名</span>
-            <input type="text" id="optFilename" value="converted" placeholder="converted" autocomplete="off">
-          </label>
-        </div>
-      </section>
-
-      <section class="panel list-panel">
-        <div class="list-head">
-          <h3><span data-i18n="queueTitle">文件队列</span> <span id="fileCount" class="muted">0</span></h3>
-          <div class="list-actions">
-            <button type="button" id="btnClear" class="btn ghost" disabled data-i18n="btnClear">清空</button>
-            <button type="button" id="btnConvert" class="btn primary" disabled data-i18n="btnConvert">生成 PDF</button>
-          </div>
-        </div>
-        <p class="hint" data-i18n-html="queueHint">按住手柄 <span class="handle-demo">⠿</span> 拖动可调整顺序。合并时从上到下就是 PDF 页序。</p>
-        <ul id="fileList" class="file-list" aria-live="polite"></ul>
-        <div id="emptyState" class="empty-state" data-i18n="emptyState">还没有文件。拖入后会出现在这里。</div>
-      </section>
-
-      <section class="panel status-panel" id="statusPanel" hidden>
-        <div class="status-row">
-          <div id="statusText" class="status-text" data-i18n="statusPreparing">准备中…</div>
-          <div id="statusPct" class="status-pct">0%</div>
-        </div>
-        <div class="progress"><div id="progressBar" class="progress-bar"></div></div>
-        <div id="statusDetail" class="status-detail muted"></div>
-      </section>
-
-      <section class="panel tips-panel">
-        <h3 data-i18n="tipsTitle">说明</h3>
-        <ul class="tips">
-          <li data-i18n-html="tip1">转换在你的浏览器内存里完成，文件<strong>不会上传</strong>到任何服务器。</li>
-          <li data-i18n-html="tip2">Word 仅支持 <code>.docx</code>。会尽量保留标题、段落、列表、表格、粗斜体与内嵌图片。</li>
-          <li data-i18n-html="tip3">旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。</li>
-          <li data-i18n="tip4">已有 PDF 可加入队列，用于排序后与其它文件合并。</li>
-          <li data-i18n-html="tip5">依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。</li>
-          <li data-i18n-html="tip6">图片适配：<strong>铺满裁切 / 拉伸铺满</strong>会铺满整页且无白边（忽略页边距）；只有「完整放入」会留白并使用页边距。</li>
-        </ul>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-left">
-        <span>KenEasy PDF Converter · MIT</span>
-        <span class="muted" data-i18n="footerNote">开源 · 纯前端 · 可离线</span>
-      </div>
-      <div class="footer-right">
-        <a
-          class="footer-link"
-          href="https://github.com/ngiken/KenEasy-PDF-Converter"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-i18n="footerGithub"
-        >GitHub 仓库</a>
-        <span class="footer-dot" aria-hidden="true">·</span>
-        <a
-          class="footer-link footer-star"
-          href="https://github.com/ngiken/KenEasy-PDF-Converter"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-i18n="footerStar"
-        >欢迎 Star ★</a>
-      </div>
-    </footer>
+  <a class="skip-link" href="#main" data-i18n="skipToMain">跳到主要内容</a>
+  <div class="wallpaper" aria-hidden="true">
+    <span class="glow glow-one"></span><span class="glow glow-two"></span><span class="glow glow-three"></span>
   </div>
 
-  <!-- Vendored offline (see web/vendor/NOTICE.txt) -->
+  <div class="app">
+    <header class="header">
+      <div class="brand" aria-label="KenEasy PDF Converter">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <defs><linearGradient id="brandGradient" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse"><stop stop-color="#ff6b9d"></stop><stop offset=".52" stop-color="#8b7cff"></stop><stop offset="1" stop-color="#42bff5"></stop></linearGradient></defs>
+            <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#brandGradient)"></rect>
+            <path d="M9 7.5h10l4 4V24.5H9z" fill="none" stroke="white" stroke-width="1.7" stroke-linejoin="round"></path>
+            <path d="M19 7.5v4h4M12 16h8M12 19.5h6" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+        <div class="brand-copy"><strong>KenEasy</strong><span>PDF Converter</span></div>
+        <span class="version-pill">v0.3.0</span>
+      </div>
+      <nav class="header-actions" data-i18n-aria-label="utilityAria" aria-label="工具导航">
+        <a class="github-link" href="https://github.com/ngiken/KenEasy-PDF-Converter" target="_blank" rel="noopener noreferrer" data-i18n-aria-label="githubAria" aria-label="在 GitHub 打开本项目，欢迎点 Star">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8a9.2 9.2 0 0 0-2.9 17.9c.5.1.6-.2.6-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.7-1.4-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.3 4.6-4.6 4.9.4.3.7.9.7 1.8v2.7c0 .4.2.7.7.5A9.2 9.2 0 0 0 12 2.8Z"></path></svg>
+          <span data-i18n="githubBtn">GitHub</span>
+        </a>
+        <button type="button" id="themeToggle" class="icon-control" aria-label="切换到深色外观">
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.2A8.6 8.6 0 0 1 8.8 4 8.8 8.8 0 1 0 20 15.2Z"></path></svg>
+        </button>
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang="zh" id="langZh" aria-pressed="true">中</button>
+          <button type="button" class="lang-btn" data-lang="en" id="langEn" aria-pressed="false">EN</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="main" id="main">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="hero-kicker" data-i18n="eyebrow">A CALMER PDF WORKFLOW</p>
+          <h1 data-i18n="heroTitle">从各种文件，到一份整洁 PDF。</h1>
+          <p class="tagline" data-i18n="tagline">拖入、排序、选择版式，一次完成。所有转换都在你的设备上安静进行。</p>
+          <div class="hero-badges" data-i18n-aria-label="featuresAria" aria-label="产品特点">
+            <span class="hero-badge"><i class="hero-badge-dot pink"></i><span data-i18n="badgeNoInstall">无需安装</span></span>
+            <span class="hero-badge"><i class="hero-badge-dot blue"></i><span data-i18n="badgeLocal">本地处理</span></span>
+            <span class="hero-badge"><i class="hero-badge-dot green"></i><span data-i18n="badgeMixed">多格式合并</span></span>
+          </div>
+        </div>
+        <div class="pdf-stack" aria-hidden="true">
+          <span class="pdf-paper pdf-paper-back"><b>TXT</b><i></i><i></i></span>
+          <span class="pdf-paper pdf-paper-mid"><b>DOCX</b><i></i><i></i></span>
+          <span class="pdf-paper pdf-paper-front"><em>PDF</em><i></i><i></i><i></i></span>
+          <span class="pdf-merge-arrow">→</span>
+        </div>
+      </section>
+
+      <ol class="workflow-steps" id="workflowSteps" data-i18n-aria-label="workflowAria" aria-label="转换步骤">
+        <li data-workflow-step="1"><span>1</span><strong data-i18n="workflowImport">导入文件</strong></li>
+        <li data-workflow-step="2"><span>2</span><strong data-i18n="workflowTune">选择版式</strong></li>
+        <li data-workflow-step="3"><span>3</span><strong data-i18n="workflowExport">生成 PDF</strong></li>
+      </ol>
+
+      <section id="dropzone" class="dropzone" tabindex="0" role="button" data-i18n-aria-label="dropzoneAria" aria-label="拖入或点击选择要转换的文件">
+        <div class="dropzone-visual" aria-hidden="true">
+          <div class="pdf-drop-icon"><span>PDF</span><i>+</i></div>
+          <span class="spark spark-one"></span><span class="spark spark-two"></span><span class="spark spark-three"></span>
+        </div>
+        <div class="dropzone-content">
+          <p class="step-label" data-i18n="stepImport">01 · 导入</p>
+          <h2 data-i18n="dropTitle">把文件放到这里</h2>
+          <p class="drop-hint" data-i18n="dropHint">拖放 Word、图片、文本或 PDF，也可以一次选择多个文件。</p>
+          <button type="button" class="btn drop-action" id="chooseFilesButton">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 7l4-4 4 4M4 13v3h12v-3"></path></svg><span data-i18n="chooseFiles">选择文件</span>
+          </button>
+          <div class="format-row"><span data-i18n="dropFormats">图片 · DOCX · TXT / MD / CSV · PDF · 单个最大 40 MB</span></div>
+          <div class="local-promise"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 9V7a3.5 3.5 0 0 1 7 0v2"></path><rect x="4.5" y="9" width="11" height="8" rx="2.5"></rect><path d="m8 13 1.3 1.3 2.8-2.8"></path></svg><span data-i18n="localPromise">文件不会离开此设备</span></div>
+        </div>
+        <input id="fileInput" type="file" multiple hidden>
+      </section>
+
+      <div class="workspace-grid">
+        <section class="panel options-panel">
+          <div class="panel-heading">
+            <div><p class="step-label" data-i18n="stepOptions">02 · 设置</p><h2 data-i18n="optionsTitle">输出方案</h2><p class="muted" data-i18n="optionsSubtitle">先选一个版式预设，再按需要微调。</p></div>
+            <span class="panel-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg></span>
+          </div>
+
+          <div class="preset-section">
+            <div class="field-label" data-i18n="presetsLabel">快捷预设</div>
+            <div class="preset-grid" id="presetList" data-i18n-aria-label="presetsAria" aria-label="版式预设"></div>
+          </div>
+
+          <div class="options-stack">
+            <label class="field">
+              <span class="field-title-row"><span class="field-label" data-i18n="optPageSize">页面尺寸</span></span>
+              <select id="optPageSize"></select><small class="field-help" data-i18n="pageSizeHelp">自动尺寸只影响图片；文档与文本仍使用 A4。</small>
+            </label>
+            <label class="field">
+              <span class="field-title-row"><span class="field-label" data-i18n="optImageFit">图片适配</span></span>
+              <select id="optImageFit"></select><small class="field-help" id="imageFitHelp"></small>
+            </label>
+            <label class="field">
+              <span class="field-title-row"><span class="field-label" data-i18n="optMargin">页边距</span></span>
+              <span class="input-suffix-wrap"><input id="optMargin" type="number" min="0" max="40" step="1" inputmode="decimal"><span class="input-suffix" data-i18n="marginSuffix">mm</span></span>
+              <small class="field-help" data-i18n="marginHelp">对文档、文本和“完整放入”图片生效。</small>
+            </label>
+          </div>
+
+          <div class="option-divider" data-i18n="deliveryTitle">生成方式</div>
+          <div class="toggle-stack">
+            <label class="toggle-row"><input type="checkbox" id="optMerge"><span class="switch" aria-hidden="true"></span><span class="toggle-copy"><strong data-i18n="optMerge">合并为一个 PDF</strong><small data-i18n="optMergeHint">按照下方队列顺序合并，每个文件从新页开始。</small></span></label>
+          </div>
+          <label class="field zip-name-field">
+            <span class="field-label" data-i18n="optFilename">输出文件名</span>
+            <input type="text" id="optFilename" autocomplete="off" spellcheck="false"><small class="field-help" id="filenameHelp"></small>
+          </label>
+        </section>
+
+        <section class="panel list-panel">
+          <div class="list-head">
+            <div><p class="step-label" data-i18n="stepQueue">03 · 生成</p><div class="queue-title-row"><h2 data-i18n="queueTitle">文件队列</h2><span class="count-pill" id="fileCount">0 个</span></div><p class="muted" id="queueTotal">共 0 B</p></div>
+            <button type="button" id="btnClear" class="btn ghost" disabled data-i18n="btnClear">清空</button>
+          </div>
+          <p class="hint" data-i18n="queueHint">拖动手柄调整顺序；键盘聚焦手柄后可用 ↑ / ↓ 排序。</p>
+          <ul id="fileList" class="file-list" hidden></ul>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-visual" aria-hidden="true"><span></span><span></span><span></span></div>
+            <strong data-i18n="emptyTitle">你的文件会出现在这里</strong><p data-i18n="emptyState">导入后可以预览、排序和移除。</p>
+          </div>
+          <section class="status-panel" id="statusPanel" hidden aria-live="polite">
+            <div class="status-row"><div id="statusText" class="status-text" data-i18n="statusPreparing">正在准备…</div><div id="statusPct" class="status-pct">0%</div></div>
+            <div class="progress" id="progressTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="statusText"><div id="progressBar" class="progress-bar"></div></div>
+            <div id="statusDetail" class="status-detail muted"></div>
+          </section>
+          <div class="action-bar"><div id="actionHint" class="action-hint" data-i18n="actionEmpty">先添加文件，再生成 PDF</div><button type="button" id="btnConvert" class="btn primary" disabled aria-busy="false"><span id="btnConvertLabel" data-i18n="btnConvert">生成 PDF</span><span id="btnCount" class="button-count" hidden>0</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11"></path><path d="m11 6 4 4-4 4"></path></svg></button></div>
+        </section>
+      </div>
+
+      <section class="trust-grid" data-i18n-aria-label="guaranteesAria" aria-label="产品保障">
+        <article class="trust-card"><span class="trust-icon trust-icon-blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0 1 10 0v2"></path><rect x="5" y="10" width="14" height="10" rx="3"></rect><path d="m9.5 15 1.6 1.6 3.7-3.7"></path></svg></span><div><strong data-i18n="trustLocalTitle">100% 本地</strong><p data-i18n="trustLocalText">文件不上传服务器</p></div></article>
+        <article class="trust-card"><span class="trust-icon trust-icon-pink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6h6v5H5zM13 13h6v5h-6zM14 8h4M7 15h4"></path><path d="m16 6 2 2-2 2M9 13l2 2-2 2"></path></svg></span><div><strong data-i18n="trustMixedTitle">混合格式</strong><p data-i18n="trustMixedText">Word、图片、文本与 PDF</p></div></article>
+        <article class="trust-card"><span class="trust-icon trust-icon-green" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 20h14"></path></svg></span><div><strong data-i18n="trustOfflineTitle">可离线使用</strong><p data-i18n="trustOfflineText">依赖已随项目打包</p></div></article>
+      </section>
+
+      <details class="panel tips-panel">
+        <summary><span class="summary-title"><span class="info-icon" aria-hidden="true">i</span><span data-i18n="tipsTitle">格式、版式与隐私说明</span></span><span class="summary-chevron" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m6 8 4 4 4-4"></path></svg></span></summary>
+        <ul class="tips"><li data-i18n-html="tip1"></li><li data-i18n-html="tip2"></li><li data-i18n-html="tip3"></li><li data-i18n-html="tip4"></li><li data-i18n-html="tip5"></li><li data-i18n-html="tip6"></li></ul>
+      </details>
+    </main>
+
+    <footer class="footer"><div class="footer-left"><span class="footer-brand">KenEasy PDF Converter</span><span class="muted" data-i18n="footerNote">开源 · 纯前端 · 可离线</span></div><div class="footer-right"><span>MIT © 2026</span><a class="footer-link" href="https://github.com/ngiken/KenEasy-PDF-Converter" target="_blank" rel="noopener noreferrer" data-i18n="footerGithub">GitHub 仓库</a></div></footer>
+  </div>
+
+  <noscript><div class="noscript" data-i18n="noscript">此工具需要 JavaScript 才能在本地生成 PDF。</div></noscript>
   <script src="vendor/Sortable.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/pdf-lib.min.js"></script>
   <script src="vendor/mammoth.browser.min.js"></script>
   <script src="vendor/html2canvas.min.js"></script>
-  <script src="app.js"></script>
+  <script src="config.js?v=0.3.0"></script>
+  <script src="i18n.js?v=0.3.0"></script>
+  <script src="pdf-engine.js?v=0.3.0"></script>
+  <script src="app.js?v=0.3.0"></script>
 </body>
 </html>

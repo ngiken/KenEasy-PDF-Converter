@@ -1,0 +1,14 @@
+﻿{
+  "name": "keneasy-pdf-converter-e2e",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Real-browser regression tests and README capture tooling for KenEasy PDF Converter",
+  "scripts": {
+    "test": "node run.mjs",
+    "capture:readme": "node capture-readme.mjs && python build-readme-gif.py"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1",
+    "playwright": "^1.61.1"
+  }
+}

@@ -1,1217 +1,598 @@
-/* KenEasy PDF Converter — browser-only, offline-capable (vendored libs) */
-(function () {
+/* KenEasy PDF Converter — application layer: state, UI, queue, and workflow orchestration. */
+(function (global) {
   "use strict";
 
-  var PAGE_SIZES = {
-    a4: { w: 595.28, h: 841.89 },
-    letter: { w: 612, h: 792 },
+  var config = global.KenEasyPdfConfig;
+  var i18nFactory = global.KenEasyPdfI18n;
+  var engineFactory = global.KenEasyPdfEngine;
+  if (!config || !i18nFactory || !engineFactory) {
+    console.error("KenEasy PDF Converter core modules are missing.");
+    return;
+  }
+
+  var i18n = i18nFactory.create(config);
+  var t = i18n.t;
+  var engine = engineFactory.create(config, function (key, variables) { return t(key, variables); });
+  var state = { items: [], busy: false, completed: false, sortable: null, saveTimer: null };
+  var byId = function (id) { return document.getElementById(id); };
+  var els = {
+    dropzone: byId("dropzone"), chooseFilesButton: byId("chooseFilesButton"), fileInput: byId("fileInput"),
+    fileList: byId("fileList"), emptyState: byId("emptyState"), fileCount: byId("fileCount"), queueTotal: byId("queueTotal"),
+    btnClear: byId("btnClear"), btnConvert: byId("btnConvert"), btnConvertLabel: byId("btnConvertLabel"), btnCount: byId("btnCount"),
+    actionHint: byId("actionHint"), statusPanel: byId("statusPanel"), statusText: byId("statusText"),
+    statusPct: byId("statusPct"), statusDetail: byId("statusDetail"), progressBar: byId("progressBar"), progressTrack: byId("progressTrack"),
+    presetList: byId("presetList"), optPageSize: byId("optPageSize"), optImageFit: byId("optImageFit"),
+    imageFitHelp: byId("imageFitHelp"), optMargin: byId("optMargin"), optMerge: byId("optMerge"),
+    optFilename: byId("optFilename"), filenameHelp: byId("filenameHelp"), themeToggle: byId("themeToggle"),
+    langZh: byId("langZh"), langEn: byId("langEn"), workflowSteps: byId("workflowSteps"),
   };
-
-  var MAX_FILES = 80;
-  var MAX_FILE_BYTES = 40 * 1024 * 1024;
-  var PT_TO_CSS_PX = 96 / 72;
-  var LANG_KEY = "keneasy-pdf-lang";
-
-  var I18N = {
-    zh: {
-      pageTitle: "KenEasy PDF Converter — 打开就能用的 PDF 转换器",
-      pageDesc:
-        "打开链接即可使用：拖入 Word、图片、文本转 PDF，排序合并，文件不离开本机。无需安装。",
-      tagline: "打开就能用 · 拖入 → 排序 → 一键 PDF · 文件不上传",
-      badgeNoInstall: "无需安装",
-      badgeLocal: "本地处理",
-      dropzoneAria: "拖入或点击选择要转换的文件",
-      dropTitle: "把文件拖到这里",
-      dropHint: "或点击选择 · 支持多选",
-      dropFormats:
-        "图片 PNG / JPG / WEBP / GIF / BMP · Word DOCX · 文本 TXT / MD / CSV · PDF（合并排序）",
-      optionsTitle: "选项",
-      optMerge: "全部合并成<strong>一个 PDF</strong>（按下方顺序；每个文件从新页开始）",
-      optKeepOrder: "按队列顺序输出（拖动手柄调整）",
-      optPageSize: "页面尺寸",
-      pageAuto: "按图片尺寸（仅图片）",
-      optImageFit: "图片适配",
-      fitContain: "完整放入（可留白，遵循页边距）",
-      fitCover: "铺满裁切（无白边，可能裁切）",
-      fitStretch: "拉伸铺满（无白边，可能变形）",
-      optMargin: "页边距 (mm)",
-      optFilename: "输出文件名",
-      queueTitle: "文件队列",
-      btnClear: "清空",
-      btnConvert: "生成 PDF",
-      queueHint:
-        '按住手柄 <span class="handle-demo">⠿</span> 拖动可调整顺序。合并时从上到下就是 PDF 页序。',
-      emptyState: "还没有文件。拖入后会出现在这里。",
-      statusPreparing: "准备中…",
-      tipsTitle: "说明",
-      tip1: "转换在你的浏览器内存里完成，文件<strong>不会上传</strong>到任何服务器。",
-      tip2: "Word 仅支持 <code>.docx</code>。会尽量保留标题、段落、列表、表格、粗斜体与内嵌图片。",
-      tip3: "旧版 <code>.doc</code> 请先另存为 docx。页眉页脚、文本框、复杂浮动图仍会简化。",
-      tip4: "已有 PDF 可加入队列，用于排序后与其它文件合并。",
-      tip5: "依赖库已放在 <code>web/vendor/</code>，可用本地静态服务<strong>完全离线</strong>使用（推荐 <code>python -m http.server</code>）。",
-      tip6: "图片适配：<strong>铺满裁切 / 拉伸铺满</strong>会铺满整页且无白边（忽略页边距）；只有「完整放入」会留白并使用页边距。",
-      footerNote: "开源 · 纯前端 · 可离线",
-      githubBtn: "GitHub",
-      githubAria: "在 GitHub 打开本项目，欢迎点 Star",
-      footerGithub: "GitHub 仓库",
-      footerStar: "欢迎 Star ★",
-      maxFiles: "一次最多 {n} 个文件",
-      fileTooLarge: "{name} 超过 40MB，已跳过",
-      unsupportedDoc: "旧版 .doc 不支持，请另存为 .docx",
-      unsupportedFormat: "不支持的格式",
-      addedFiles: "已添加 {n} 个文件",
-      dragSort: "拖动排序",
-      unknownType: "未知类型",
-      remove: "移除",
-      removeAria: "移除 {name}",
-      cannotReadImage: "无法读取图片: {name}",
-      invalidImageSize: "图片尺寸无效",
-      html2canvasMissing: "html2canvas 未加载（离线包不完整）",
-      emptyDocument: "（空文档）",
-      mammothMissing: "Mammoth 未加载",
-      emptyFile: "（空文件）",
-      noConvertible: "没有可转换的文件",
-      coreMissing: "核心库未加载，请确认 web/vendor 完整",
-      converting: "正在转换…",
-      processing: "处理中 {i} / {n}",
-      generating: "生成下载…",
-      done: "完成",
-      downloaded: "已下载 {name}",
-      downloading: "下载中…",
-      downloadedMany: "已分别下载 {n} 个 PDF",
-      failed: "失败",
-      convertFailed: "转换失败",
-    },
-    en: {
-      pageTitle: "KenEasy PDF Converter — open and convert to PDF",
-      pageDesc:
-        "Open the link and convert: drop Word, images, or text into PDF, reorder and merge. Files never leave your browser. No install.",
-      tagline: "Open & go · drop → reorder → one PDF · no upload",
-      badgeNoInstall: "No install",
-      badgeLocal: "Local only",
-      dropzoneAria: "Drop or click to choose files to convert",
-      dropTitle: "Drop files here",
-      dropHint: "or click to choose · multi-select supported",
-      dropFormats:
-        "Images PNG / JPG / WEBP / GIF / BMP · Word DOCX · Text TXT / MD / CSV · PDF (merge & reorder)",
-      optionsTitle: "Options",
-      optMerge:
-        "Merge all into <strong>one PDF</strong> (queue order; each file starts on a new page)",
-      optKeepOrder: "Output in queue order (drag the handle to reorder)",
-      optPageSize: "Page size",
-      pageAuto: "Fit image size (images only)",
-      optImageFit: "Image fit",
-      fitContain: "Fit inside (letterbox, uses margin)",
-      fitCover: "Fill & crop (no border, may crop)",
-      fitStretch: "Stretch to fill (no border, may distort)",
-      optMargin: "Margin (mm)",
-      optFilename: "Output filename",
-      queueTitle: "File queue",
-      btnClear: "Clear",
-      btnConvert: "Generate PDF",
-      queueHint:
-        'Hold the handle <span class="handle-demo">⠿</span> to drag and reorder. Top to bottom becomes page order when merging.',
-      emptyState: "No files yet. Drop some and they will show up here.",
-      statusPreparing: "Preparing…",
-      tipsTitle: "Notes",
-      tip1: "Conversion runs in your browser memory. Files are <strong>never uploaded</strong> to any server.",
-      tip2: "Word supports <code>.docx</code> only. Headings, paragraphs, lists, tables, emphasis, and embedded images are kept as much as possible.",
-      tip3: "Save legacy <code>.doc</code> as docx first. Headers/footers, text boxes, and complex floating images are simplified.",
-      tip4: "Existing PDFs can join the queue for reorder + merge with other files.",
-      tip5: "Libraries live in <code>web/vendor/</code>. You can run fully <strong>offline</strong> with a local static server (recommended: <code>python -m http.server</code>).",
-      tip6: "Image fit: <strong>Fill & crop / Stretch</strong> cover the full page with no white border (margin ignored). Only “Fit inside” letterboxes and uses margin.",
-      footerNote: "Open source · frontend only · offline-ready",
-      githubBtn: "GitHub",
-      githubAria: "Open this project on GitHub — stars welcome",
-      footerGithub: "GitHub repo",
-      footerStar: "Star ★",
-      maxFiles: "Up to {n} files at a time",
-      fileTooLarge: "{name} is over 40MB and was skipped",
-      unsupportedDoc: "Legacy .doc is not supported — save as .docx",
-      unsupportedFormat: "Unsupported format",
-      addedFiles: "Added {n} file(s)",
-      dragSort: "Drag to reorder",
-      unknownType: "unknown type",
-      remove: "Remove",
-      removeAria: "Remove {name}",
-      cannotReadImage: "Could not read image: {name}",
-      invalidImageSize: "Invalid image size",
-      html2canvasMissing: "html2canvas not loaded (offline bundle incomplete)",
-      emptyDocument: "(empty document)",
-      mammothMissing: "Mammoth not loaded",
-      emptyFile: "(empty file)",
-      noConvertible: "No convertible files",
-      coreMissing: "Core libraries missing — check web/vendor",
-      converting: "Converting…",
-      processing: "Processing {i} / {n}",
-      generating: "Preparing download…",
-      done: "Done",
-      downloaded: "Downloaded {name}",
-      downloading: "Downloading…",
-      downloadedMany: "Downloaded {n} PDF file(s)",
-      failed: "Failed",
-      convertFailed: "Conversion failed",
-    },
-  };
-
-  /** @type {"zh"|"en"} */
-  var lang = "zh";
-
-  function detectLang() {
-    try {
-      var saved = localStorage.getItem(LANG_KEY);
-      if (saved === "zh" || saved === "en") return saved;
-    } catch (_) {
-      /* ignore */
-    }
-    var nav = (navigator.language || navigator.userLanguage || "en").toLowerCase();
-    return nav.indexOf("zh") === 0 ? "zh" : "en";
-  }
-
-  function t(key, vars) {
-    var dict = I18N[lang] || I18N.en;
-    var s = dict[key];
-    if (s == null) s = (I18N.en[key] != null ? I18N.en[key] : key);
-    if (vars) {
-      s = s.replace(/\{(\w+)\}/g, function (_, k) {
-        return vars[k] != null ? String(vars[k]) : "";
-      });
-    }
-    return s;
-  }
-
-  function applyStaticI18n() {
-    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
-    document.title = t("pageTitle");
-    var desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", t("pageDesc"));
-
-    document.querySelectorAll("[data-i18n]").forEach(function (el) {
-      el.textContent = t(el.getAttribute("data-i18n"));
-    });
-    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
-      el.innerHTML = t(el.getAttribute("data-i18n-html"));
-    });
-    document.querySelectorAll("[data-i18n-aria-label]").forEach(function (el) {
-      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label")));
-    });
-
-    var zhBtn = $("langZh");
-    var enBtn = $("langEn");
-    if (zhBtn) zhBtn.setAttribute("aria-pressed", lang === "zh" ? "true" : "false");
-    if (enBtn) enBtn.setAttribute("aria-pressed", lang === "en" ? "true" : "false");
-  }
-
-  function setLang(next) {
-    if (next !== "zh" && next !== "en") return;
-    if (next === lang) return;
-    lang = next;
-    try {
-      localStorage.setItem(LANG_KEY, lang);
-    } catch (_) {
-      /* ignore */
-    }
-    applyStaticI18n();
-    renderList();
-  }
-
-  /** @type {{id:string,file:File,kind:string,name:string,size:number,previewUrl?:string,error?:string,errorKey?:string}[]} */
-  var items = [];
-  var converting = false;
-  var sortable = null;
-
-  var $ = function (id) {
-    return document.getElementById(id);
-  };
-  var dropzone = $("dropzone");
-  var fileInput = $("fileInput");
-  var fileList = $("fileList");
-  var emptyState = $("emptyState");
-  var fileCount = $("fileCount");
-  var btnClear = $("btnClear");
-  var btnConvert = $("btnConvert");
-  var statusPanel = $("statusPanel");
-  var statusText = $("statusText");
-  var statusPct = $("statusPct");
-  var statusDetail = $("statusDetail");
-  var progressBar = $("progressBar");
-
-  function toast(msg, isError) {
-    var el = document.querySelector(".toast");
-    if (!el) {
-      el = document.createElement("div");
-      el.className = "toast";
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.classList.toggle("error", !!isError);
-    el.classList.add("show");
-    clearTimeout(el._t);
-    el._t = setTimeout(function () {
-      el.classList.remove("show");
-    }, 3200);
-  }
 
   function uid() {
     return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
   }
 
-  function formatBytes(n) {
-    if (n < 1024) return n + " B";
-    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
-    return (n / (1024 * 1024)).toFixed(1) + " MB";
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
   }
 
-  function detectKind(file) {
-    var name = (file.name || "").toLowerCase();
-    var type = (file.type || "").toLowerCase();
-    if (type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp)$/i.test(name)) return "image";
-    if (type === "application/pdf" || name.endsWith(".pdf")) return "pdf";
-    if (
-      name.endsWith(".docx") ||
-      type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ) {
-      return "docx";
+  function toast(message, isError) {
+    var element = document.querySelector(".toast");
+    if (!element) {
+      element = document.createElement("div");
+      element.className = "toast";
+      element.setAttribute("role", "status");
+      document.body.appendChild(element);
     }
-    if (name.endsWith(".doc")) return "unsupported-doc";
-    if (type.startsWith("text/") || /\.(txt|md|markdown|csv|log|json)$/i.test(name)) {
-      return "text";
-    }
-    return "unknown";
+    element.textContent = message;
+    element.classList.toggle("error", !!isError);
+    element.classList.add("show");
+    clearTimeout(element._timer);
+    element._timer = setTimeout(function () { element.classList.remove("show"); }, 3200);
   }
 
-  function kindLabel(kind) {
-    switch (kind) {
-      case "image":
-        return "IMG";
-      case "docx":
-        return "DOCX";
-      case "text":
-        return "TXT";
-      case "pdf":
-        return "PDF";
-      case "unsupported-doc":
-        return "DOC";
-      default:
-        return "?";
+  function detectAppearance() {
+    try {
+      var saved = localStorage.getItem(config.storageKeys.appearance);
+      if (saved === "light" || saved === "dark") return saved;
+    } catch (error) {}
+    return global.matchMedia && global.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function setAppearance(appearance, persist) {
+    var next = appearance === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.style.colorScheme = next;
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", next === "dark" ? "#111318" : "#f5f5f7");
+    if (persist) {
+      try { localStorage.setItem(config.storageKeys.appearance, next); } catch (error) {}
+    }
+    syncThemeControl();
+  }
+
+  function syncThemeControl() {
+    var dark = document.documentElement.getAttribute("data-theme") === "dark";
+    els.themeToggle.setAttribute("aria-label", t(dark ? "themeToLight" : "themeToDark"));
+    els.themeToggle.setAttribute("aria-pressed", String(dark));
+  }
+
+  function applyStaticI18n() {
+    var language = i18n.getLanguage();
+    document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+    document.title = t("pageTitle");
+    var description = document.querySelector('meta[name="description"]');
+    if (description) description.setAttribute("content", t("pageDesc"));
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (node) {
+      node.textContent = t(node.getAttribute("data-i18n"));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-html]"), function (node) {
+      node.innerHTML = t(node.getAttribute("data-i18n-html"));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-aria-label]"), function (node) {
+      node.setAttribute("aria-label", t(node.getAttribute("data-i18n-aria-label")));
+    });
+    var formatNode = document.querySelector('[data-i18n="dropFormats"]');
+    if (formatNode) formatNode.textContent = t("dropFormats", { maxFileSize: engine.formatBytes(config.limits.maxFileBytes) });
+    els.langZh.setAttribute("aria-pressed", String(language === "zh"));
+    els.langEn.setAttribute("aria-pressed", String(language === "en"));
+    syncThemeControl();
+    syncWorkflowState();
+    syncPrimaryAction();
+  }
+
+  function setLanguage(next) {
+    if (!i18n.setLanguage(next)) return;
+    renderRuleOptions();
+    renderPresets();
+    applyStaticI18n();
+    renderList();
+    syncControlPresentation();
+  }
+
+  function normalizeSettings(candidate) {
+    var defaults = config.defaults;
+    var pageValues = config.pageSizes.map(function (rule) { return rule.value; });
+    var fitValues = config.imageFits.map(function (rule) { return rule.value; });
+    var margin = Number(candidate && candidate.marginMm);
+    return {
+      merge: candidate && typeof candidate.merge === "boolean" ? candidate.merge : defaults.merge,
+      pageSize: candidate && pageValues.indexOf(candidate.pageSize) >= 0 ? candidate.pageSize : defaults.pageSize,
+      imageFit: candidate && fitValues.indexOf(candidate.imageFit) >= 0 ? candidate.imageFit : defaults.imageFit,
+      marginMm: isFinite(margin) ? clamp(margin, 0, 40) : defaults.marginMm,
+      filename: engine.sanitizeFilename(candidate && candidate.filename || defaults.filename),
+    };
+  }
+
+  function loadSettings() {
+    try {
+      var raw = localStorage.getItem(config.storageKeys.settings);
+      return normalizeSettings(raw ? JSON.parse(raw) : config.defaults);
+    } catch (error) {
+      return normalizeSettings(config.defaults);
     }
   }
 
-  function isConvertible(kind) {
-    return kind === "image" || kind === "docx" || kind === "text" || kind === "pdf";
+  function applySettings(settings) {
+    els.optMerge.checked = settings.merge;
+    els.optPageSize.value = settings.pageSize;
+    els.optImageFit.value = settings.imageFit;
+    els.optMargin.value = String(settings.marginMm);
+    els.optFilename.value = settings.filename;
+  }
+
+  function readOptions() {
+    var settings = normalizeSettings({
+      merge: els.optMerge.checked,
+      pageSize: els.optPageSize.value,
+      imageFit: els.optImageFit.value,
+      marginMm: els.optMargin.value,
+      filename: els.optFilename.value,
+    });
+    els.optMargin.value = String(settings.marginMm);
+    return settings;
+  }
+
+  function scheduleSettingsSave() {
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(function () {
+      try { localStorage.setItem(config.storageKeys.settings, JSON.stringify(readOptions())); } catch (error) {}
+    }, 120);
+  }
+
+  function renderRuleOptions() {
+    var selectedPage = els.optPageSize.value || config.defaults.pageSize;
+    var selectedFit = els.optImageFit.value || config.defaults.imageFit;
+    els.optPageSize.innerHTML = "";
+    config.pageSizes.forEach(function (rule) {
+      var option = document.createElement("option");
+      option.value = rule.value;
+      option.textContent = rule.labelKey ? t(rule.labelKey) : rule.label;
+      els.optPageSize.appendChild(option);
+    });
+    els.optImageFit.innerHTML = "";
+    config.imageFits.forEach(function (rule) {
+      var option = document.createElement("option");
+      option.value = rule.value;
+      option.textContent = t(rule.labelKey);
+      els.optImageFit.appendChild(option);
+    });
+    els.optPageSize.value = config.pageSizes.some(function (rule) { return rule.value === selectedPage; }) ? selectedPage : config.defaults.pageSize;
+    els.optImageFit.value = config.imageFits.some(function (rule) { return rule.value === selectedFit; }) ? selectedFit : config.defaults.imageFit;
+    els.fileInput.accept = config.input.accept.map(function (extension) { return "." + extension; }).concat([
+      "image/*", "text/plain", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]).join(",");
+  }
+
+  function renderPresets() {
+    els.presetList.innerHTML = "";
+    config.presets.forEach(function (preset) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "preset-btn";
+      button.dataset.presetId = preset.id;
+      button.setAttribute("aria-pressed", "false");
+      var title = document.createElement("strong");
+      title.textContent = t(preset.nameKey);
+      var description = document.createElement("small");
+      description.textContent = t(preset.descKey);
+      button.appendChild(title);
+      button.appendChild(description);
+      button.addEventListener("click", function () { if (!state.busy) applyPreset(preset); });
+      els.presetList.appendChild(button);
+    });
+    updateActivePreset();
+  }
+
+  function applyPreset(preset) {
+    els.optMerge.checked = preset.values.merge;
+    els.optPageSize.value = preset.values.pageSize;
+    els.optImageFit.value = preset.values.imageFit;
+    els.optMargin.value = String(preset.values.marginMm);
+    state.completed = false;
+    hideStatus();
+    syncControlPresentation();
+    scheduleSettingsSave();
+    toast(t("presetApplied", { name: t(preset.nameKey) }));
+  }
+
+  function updateActivePreset() {
+    var options = readOptions();
+    Array.prototype.forEach.call(els.presetList.querySelectorAll(".preset-btn"), function (button) {
+      var preset = config.presets.find(function (candidate) { return candidate.id === button.dataset.presetId; });
+      var active = preset && Object.keys(preset.values).every(function (key) { return options[key] === preset.values[key]; });
+      button.classList.toggle("active", !!active);
+      button.setAttribute("aria-pressed", String(!!active));
+    });
+  }
+
+  function syncControlPresentation() {
+    var options = readOptions();
+    var fit = config.imageFits.find(function (rule) { return rule.value === options.imageFit; }) || config.imageFits[0];
+    els.imageFitHelp.textContent = t(fit.helpKey);
+    els.filenameHelp.textContent = options.merge
+      ? t("filenameHelpMerge", { name: options.filename })
+      : t("filenameHelpSeparate");
+    els.optFilename.disabled = state.busy || !options.merge;
+    updateActivePreset();
+    syncPrimaryAction();
+  }
+
+  function validItems() {
+    return state.items.filter(function (item) { return engine.isConvertible(item.kind) && !item.errorKey; });
+  }
+
+  function totalBytes(items) {
+    return items.reduce(function (sum, item) { return sum + item.size; }, 0);
   }
 
   function itemErrorText(item) {
-    if (item.errorKey === "unsupportedDoc") return t("unsupportedDoc");
-    if (item.errorKey === "unsupportedFormat") return t("unsupportedFormat");
-    return item.error || "";
+    return item.errorKey ? t(item.errorKey) : item.error || "";
   }
 
   function addFiles(fileListLike) {
+    if (state.busy) return;
     var incoming = Array.from(fileListLike || []);
     if (!incoming.length) return;
-
     var added = 0;
     for (var i = 0; i < incoming.length; i++) {
       var file = incoming[i];
-      if (items.length >= MAX_FILES) {
-        toast(t("maxFiles", { n: MAX_FILES }), true);
+      if (state.items.length >= config.limits.maxFiles) {
+        toast(t("maxFiles", { n: config.limits.maxFiles }), true);
         break;
       }
-      if (file.size > MAX_FILE_BYTES) {
-        toast(t("fileTooLarge", { name: file.name }), true);
+      if (file.size > config.limits.maxFileBytes) {
+        toast(t("fileTooLarge", { name: file.name, size: engine.formatBytes(config.limits.maxFileBytes) }), true);
         continue;
       }
-      var kind = detectKind(file);
-      var item = {
-        id: uid(),
-        file: file,
-        kind: kind,
-        name: file.name,
-        size: file.size,
-        isNew: true,
-      };
-      if (!isConvertible(kind)) {
-        item.errorKey = kind === "unsupported-doc" ? "unsupportedDoc" : "unsupportedFormat";
-        item.error = itemErrorText(item);
-      }
+      var kind = engine.detectKind(file);
+      var item = { id: uid(), file: file, kind: kind, name: file.name, size: file.size, isNew: true };
+      if (!engine.isConvertible(kind)) item.errorKey = engine.errorKeyForKind(kind);
       if (kind === "image") {
-        try {
-          item.previewUrl = URL.createObjectURL(file);
-        } catch (_) {
-          /* ignore */
-        }
+        try { item.previewUrl = URL.createObjectURL(file); } catch (error) {}
       }
-      items.push(item);
-      added++;
+      state.items.push(item);
+      added += 1;
     }
     if (added) {
+      state.completed = false;
+      hideStatus();
       renderList();
       toast(t("addedFiles", { n: added }));
     }
   }
 
-  function removeItem(id) {
-    var li = fileList.querySelector('[data-id="' + id + '"]');
-    if (li) {
-      li.classList.add("removing");
-      var removed = false;
-      var triggerRemove = function () {
-        if (removed) return;
-        removed = true;
-        doRemove();
-      };
-      li.addEventListener("animationend", triggerRemove, { once: true });
-      setTimeout(triggerRemove, 360);
-    } else {
-      doRemove();
-    }
+  function releaseItem(item) {
+    if (item && item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  }
 
-    function doRemove() {
-      var idx = items.findIndex(function (x) {
-        return x.id === id;
-      });
-      if (idx < 0) return;
-      var it = items[idx];
-      if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
-      items.splice(idx, 1);
+  function removeItem(id) {
+    if (state.busy) return;
+    var row = els.fileList.querySelector('[data-id="' + id + '"]');
+    var done = false;
+    function removeNow() {
+      if (done) return;
+      done = true;
+      var index = state.items.findIndex(function (item) { return item.id === id; });
+      if (index < 0) return;
+      releaseItem(state.items[index]);
+      state.items.splice(index, 1);
+      state.completed = false;
+      hideStatus();
       renderList();
     }
+    if (!row) { removeNow(); return; }
+    row.classList.add("removing");
+    row.addEventListener("animationend", removeNow, { once: true });
+    setTimeout(removeNow, 360);
   }
 
   function clearAll() {
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].previewUrl) URL.revokeObjectURL(items[i].previewUrl);
-    }
-    items = [];
+    if (state.busy) return;
+    state.items.forEach(releaseItem);
+    state.items = [];
+    state.completed = false;
+    hideStatus();
     renderList();
-    setStatus(false);
+    toast(t("queueCleared"));
   }
 
   function syncOrderFromDom() {
-    var ids = Array.from(fileList.children).map(function (li) {
-      return li.dataset.id;
+    var map = new Map(state.items.map(function (item) { return [item.id, item]; }));
+    var ordered = Array.prototype.map.call(els.fileList.children, function (row) { return map.get(row.dataset.id); }).filter(Boolean);
+    if (ordered.length === state.items.length) state.items = ordered;
+    renderList();
+  }
+
+  function moveItem(id, direction) {
+    if (state.busy) return;
+    var index = state.items.findIndex(function (item) { return item.id === id; });
+    var next = index + direction;
+    if (index < 0 || next < 0 || next >= state.items.length) return;
+    var moved = state.items[index];
+    state.items.splice(index, 1);
+    state.items.splice(next, 0, moved);
+    renderList();
+    var handle = els.fileList.querySelector('[data-id="' + id + '"] .handle');
+    if (handle) handle.focus();
+    toast(t("reordered", { name: moved.name, position: next + 1 }));
+  }
+
+  function createFileRow(item, newIndex) {
+    var row = document.createElement("li");
+    row.className = "file-item" + (item.errorKey ? " is-error" : "") + (state.completed && !item.errorKey ? " is-done" : "");
+    row.dataset.id = item.id;
+    if (item.isNew) {
+      row.classList.add("new-item");
+      row.style.animationDelay = newIndex * 55 + "ms";
+      delete item.isNew;
+    }
+    var handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "handle";
+    handle.title = t("dragSort");
+    handle.setAttribute("aria-label", t("dragSort") + ": " + item.name);
+    handle.textContent = "⠿";
+    handle.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        event.preventDefault();
+        moveItem(item.id, event.key === "ArrowUp" ? -1 : 1);
+      }
     });
-    var map = new Map(
-      items.map(function (x) {
-        return [x.id, x];
-      })
-    );
-    items = ids
-      .map(function (id) {
-        return map.get(id);
-      })
-      .filter(Boolean);
+    var thumb = document.createElement("div");
+    thumb.className = "thumb";
+    if (item.previewUrl) {
+      var image = document.createElement("img");
+      image.src = item.previewUrl;
+      image.alt = "";
+      thumb.appendChild(image);
+    } else thumb.textContent = engine.kindLabel(item.kind);
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var name = document.createElement("div");
+    name.className = "name";
+    name.textContent = item.name;
+    name.title = item.name;
+    var sub = document.createElement("div");
+    sub.className = "sub";
+    sub.textContent = item.errorKey ? itemErrorText(item) : engine.formatBytes(item.size) + " · " + (item.file.type || t("unknownType"));
+    meta.appendChild(name);
+    meta.appendChild(sub);
+    var kind = document.createElement("span");
+    kind.className = "kind " + item.kind;
+    kind.textContent = engine.kindLabel(item.kind);
+    var remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "icon-btn";
+    remove.title = t("remove");
+    remove.setAttribute("aria-label", t("removeAria", { name: item.name }));
+    remove.textContent = "×";
+    remove.disabled = state.busy;
+    remove.addEventListener("click", function () { removeItem(item.id); });
+    row.appendChild(handle); row.appendChild(thumb); row.appendChild(meta); row.appendChild(kind); row.appendChild(remove);
+    return row;
   }
 
   function renderList() {
-    fileCount.textContent = String(items.length);
-    var has = items.length > 0;
-    emptyState.hidden = has;
-    fileList.hidden = !has;
-    btnClear.disabled = !has || converting;
-    var okCount = items.filter(function (x) {
-      return isConvertible(x.kind) && !x.errorKey;
-    }).length;
-    btnConvert.disabled = okCount === 0 || converting;
-
-    fileList.innerHTML = "";
-    var newIdx = 0;
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      var li = document.createElement("li");
-      li.className = "file-item" + (it.errorKey || it.error ? " error" : "");
-      li.dataset.id = it.id;
-
-      if (it.isNew) {
-        li.classList.add("new-item");
-        li.style.animationDelay = newIdx * 55 + "ms";
-        newIdx++;
-        delete it.isNew;
-      }
-
-      var handle = document.createElement("div");
-      handle.className = "handle";
-      handle.title = t("dragSort");
-      handle.textContent = "⠿";
-
-      var thumb = document.createElement("div");
-      thumb.className = "thumb";
-      if (it.previewUrl) {
-        var img = document.createElement("img");
-        img.src = it.previewUrl;
-        img.alt = "";
-        thumb.appendChild(img);
-      } else {
-        thumb.textContent = kindLabel(it.kind);
-      }
-
-      var meta = document.createElement("div");
-      meta.className = "meta";
-      var name = document.createElement("div");
-      name.className = "name";
-      name.textContent = it.name;
-      name.title = it.name;
-      var sub = document.createElement("div");
-      sub.className = "sub";
-      sub.textContent = it.errorKey
-        ? itemErrorText(it)
-        : formatBytes(it.size) + " · " + (it.file.type || t("unknownType"));
-      meta.appendChild(name);
-      meta.appendChild(sub);
-
-      var kindEl = document.createElement("span");
-      kindEl.className = "kind " + (it.errorKey || it.error ? "unknown" : it.kind);
-      kindEl.textContent = kindLabel(it.kind);
-
-      var del = document.createElement("button");
-      del.type = "button";
-      del.className = "icon-btn";
-      del.title = t("remove");
-      del.setAttribute("aria-label", t("removeAria", { name: it.name }));
-      del.textContent = "×";
-      del.addEventListener(
-        "click",
-        (function (id) {
-          return function () {
-            removeItem(id);
-          };
-        })(it.id)
-      );
-
-      li.appendChild(handle);
-      li.appendChild(thumb);
-      li.appendChild(meta);
-      li.appendChild(kindEl);
-      li.appendChild(del);
-      fileList.appendChild(li);
-    }
-
-    if (!sortable && window.Sortable) {
-      sortable = Sortable.create(fileList, {
-        handle: ".handle",
-        animation: 150,
-        ghostClass: "sortable-ghost",
-        dragClass: "sortable-drag",
-        onEnd: syncOrderFromDom,
+    var hasItems = state.items.length > 0;
+    var usable = validItems();
+    var bytes = totalBytes(state.items);
+    els.fileCount.textContent = hasItems ? t("queueCount", { n: state.items.length }) : t("queueEmptyCount");
+    els.queueTotal.textContent = t("queueTotal", { size: engine.formatBytes(bytes) });
+    els.emptyState.hidden = hasItems;
+    els.fileList.hidden = !hasItems;
+    els.dropzone.classList.toggle("has-files", hasItems);
+    els.fileList.innerHTML = "";
+    var newIndex = 0;
+    state.items.forEach(function (item) {
+      els.fileList.appendChild(createFileRow(item, item.isNew ? newIndex++ : newIndex));
+    });
+    els.btnClear.disabled = !hasItems || state.busy;
+    if (!state.sortable && global.Sortable) {
+      state.sortable = global.Sortable.create(els.fileList, {
+        handle: ".handle", animation: 160, ghostClass: "sortable-ghost", dragClass: "sortable-drag", onEnd: syncOrderFromDom,
       });
     }
+    if (state.sortable) state.sortable.option("disabled", state.busy);
+    syncBusyControls();
+    syncPrimaryAction();
+    syncWorkflowState();
   }
 
-  function setStatus(show, text, pct, detail) {
-    statusPanel.hidden = !show;
+  function syncBusyControls() {
+    var controls = [els.optPageSize, els.optImageFit, els.optMargin, els.optMerge, els.optFilename];
+    controls.forEach(function (control) { control.disabled = state.busy; });
+    if (!state.busy && !els.optMerge.checked) els.optFilename.disabled = true;
+    Array.prototype.forEach.call(els.presetList.querySelectorAll("button"), function (button) { button.disabled = state.busy; });
+    els.dropzone.setAttribute("aria-disabled", String(state.busy));
+    els.fileInput.disabled = state.busy;
+    els.btnConvert.setAttribute("aria-busy", String(state.busy));
+    els.btnConvert.classList.toggle("is-busy", state.busy);
+  }
+
+  function syncPrimaryAction() {
+    var usable = validItems();
+    var bytes = totalBytes(usable);
+    els.btnConvert.disabled = !usable.length || state.busy;
+    els.btnConvertLabel.textContent = t(state.busy ? "btnWorking" : "btnConvert");
+    els.btnCount.hidden = !usable.length;
+    els.btnCount.textContent = String(usable.length);
+    els.actionHint.textContent = usable.length ? t("actionReady", { n: usable.length, size: engine.formatBytes(bytes) }) : t("actionEmpty");
+  }
+
+  function syncWorkflowState() {
+    var stage = !state.items.length ? 1 : (state.busy || state.completed ? 3 : 2);
+    Array.prototype.forEach.call(els.workflowSteps.children, function (step) {
+      var number = Number(step.dataset.workflowStep);
+      var current = number === stage;
+      var complete = number < stage || (state.completed && number === 3);
+      step.classList.toggle("active", current && !state.completed);
+      step.classList.toggle("complete", complete);
+      if (current && !state.completed) step.setAttribute("aria-current", "step"); else step.removeAttribute("aria-current");
+      var name = t(number === 1 ? "workflowImport" : number === 2 ? "workflowTune" : "workflowExport");
+      var status = complete ? t("workflowStateComplete") : current ? t("workflowStateCurrent") : t("workflowStateUpcoming");
+      step.setAttribute("aria-label", t("workflowStepLabel", { n: number, name: name, state: status }));
+    });
+  }
+
+  function setStatus(show, text, percent, detail) {
+    els.statusPanel.hidden = !show;
     if (!show) {
-      progressBar.style.width = "0%";
+      els.progressBar.style.width = "0%";
+      els.progressTrack.setAttribute("aria-valuenow", "0");
       return;
     }
-    if (text != null) statusText.textContent = text;
-    if (pct != null) {
-      var p = Math.max(0, Math.min(100, Math.round(pct)));
-      statusPct.textContent = p + "%";
-      progressBar.style.width = p + "%";
+    if (text != null) els.statusText.textContent = text;
+    if (percent != null) {
+      var value = clamp(Math.round(percent), 0, 100);
+      els.statusPct.textContent = value + "%";
+      els.progressBar.style.width = value + "%";
+      els.progressTrack.setAttribute("aria-valuenow", String(value));
     }
-    if (detail != null) statusDetail.textContent = detail;
+    if (detail != null) els.statusDetail.textContent = detail;
   }
 
-  function mmToPt(mm) {
-    return (mm * 72) / 25.4;
-  }
-
-  function readAsArrayBuffer(file) {
-    return file.arrayBuffer();
-  }
-
-  function readAsText(file) {
-    return file.text();
-  }
-
-  function loadImage(file) {
-    return new Promise(function (resolve, reject) {
-      var url = URL.createObjectURL(file);
-      var img = new Image();
-      img.onload = function () {
-        URL.revokeObjectURL(url);
-        resolve(img);
-      };
-      img.onerror = function () {
-        URL.revokeObjectURL(url);
-        reject(new Error(t("cannotReadImage", { name: file.name })));
-      };
-      img.src = url;
-    });
-  }
-
-  function imageToDataUrl(img) {
-    var canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth || img.width;
-    canvas.height = img.naturalHeight || img.height;
-    if (!canvas.width || !canvas.height) throw new Error(t("invalidImageSize"));
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-    return canvas.toDataURL("image/jpeg", 0.92);
-  }
-
-  /**
-   * Cover crop: take the largest centered source rect matching target aspect,
-   * then rasterize. Drawing that bitmap to the full page box fills with no letterbox.
-   */
-  function imageToCoverDataUrl(img, boxAspect) {
-    var iw = img.naturalWidth || img.width;
-    var ih = img.naturalHeight || img.height;
-    if (!iw || !ih) throw new Error(t("invalidImageSize"));
-    var aspect = boxAspect > 0 ? boxAspect : iw / ih;
-    var srcAspect = iw / ih;
-    var sx = 0;
-    var sy = 0;
-    var sw = iw;
-    var sh = ih;
-    if (srcAspect > aspect) {
-      // wider than target — crop left/right
-      sw = ih * aspect;
-      sx = (iw - sw) / 2;
-    } else {
-      // taller than target — crop top/bottom
-      sh = iw / aspect;
-      sy = (ih - sh) / 2;
-    }
-    // Keep output resolution close to source crop, capped for memory
-    var maxSide = 4096;
-    var outW = Math.max(1, Math.round(sw));
-    var outH = Math.max(1, Math.round(sh));
-    if (outW > maxSide || outH > maxSide) {
-      var s = maxSide / Math.max(outW, outH);
-      outW = Math.max(1, Math.round(outW * s));
-      outH = Math.max(1, Math.round(outH * s));
-    }
-    var canvas = document.createElement("canvas");
-    canvas.width = outW;
-    canvas.height = outH;
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, outW, outH);
-    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
-    return canvas.toDataURL("image/jpeg", 0.92);
-  }
-
-  /** Contain (letterbox) placement inside a content box. */
-  function fitContainRect(srcW, srcH, boxW, boxH) {
-    var scale = Math.min(boxW / srcW, boxH / srcH);
-    var w = srcW * scale;
-    var h = srcH * scale;
-    return {
-      x: (boxW - w) / 2,
-      y: (boxH - h) / 2,
-      w: w,
-      h: h,
-    };
-  }
-
-  /**
-   * Place an image on a PDF page.
-   * - contain: keep aspect, may letterbox; respects margin
-   * - cover: full-bleed crop to page (ignores margin so no white border)
-   * - stretch: full-bleed stretch to page (ignores margin; may distort)
-   */
-  function addImageToPage(doc, img, pageW, pageH, margin, mode) {
-    var fit = mode || "contain";
-    if (fit === "cover" || fit === "stretch") {
-      // Full page fill — no white edge from page margin
-      var dataUrl =
-        fit === "cover"
-          ? imageToCoverDataUrl(img, pageW / pageH)
-          : imageToDataUrl(img);
-      doc.addImage(dataUrl, "JPEG", 0, 0, pageW, pageH);
-      return;
-    }
-    // contain
-    var boxW = Math.max(pageW - margin * 2, 10);
-    var boxH = Math.max(pageH - margin * 2, 10);
-    var iw = img.naturalWidth || img.width;
-    var ih = img.naturalHeight || img.height;
-    var r = fitContainRect(iw, ih, boxW, boxH);
-    doc.addImage(imageToDataUrl(img), "JPEG", margin + r.x, margin + r.y, r.w, r.h);
-  }
-
-  function waitForImages(root) {
-    var imgs = Array.prototype.slice.call(root.querySelectorAll("img"));
-    if (!imgs.length) return Promise.resolve();
-    return Promise.all(
-      imgs.map(function (img) {
-        if (img.complete && img.naturalWidth) return Promise.resolve();
-        return new Promise(function (resolve) {
-          var done = function () {
-            resolve();
-          };
-          img.onload = done;
-          img.onerror = done;
-          setTimeout(done, 8000);
-        });
-      })
-    );
-  }
-
-  var DOCX_STYLE =
-    "box-sizing:border-box;" +
-    "margin:0;padding:0;" +
-    'font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC","Segoe UI",sans-serif;' +
-    "font-size:11pt;line-height:1.55;color:#111;background:#fff;" +
-    "word-wrap:break-word;overflow-wrap:anywhere;";
-
-  var DOCX_INNER_CSS =
-    "h1{font-size:20pt;font-weight:700;margin:0 0 12px;line-height:1.3;color:#111}" +
-    "h2{font-size:16pt;font-weight:700;margin:18px 0 10px;line-height:1.35;color:#111}" +
-    "h3{font-size:13.5pt;font-weight:700;margin:14px 0 8px;line-height:1.4;color:#111}" +
-    "h4,h5,h6{font-size:12pt;font-weight:700;margin:12px 0 6px;line-height:1.4;color:#111}" +
-    "p{margin:0 0 10px;text-align:justify}" +
-    "p:empty::before{content:'\\00a0'}" +
-    "ul,ol{margin:0 0 10px;padding-left:1.4em}" +
-    "li{margin:0 0 4px}" +
-    "strong,b{font-weight:700}" +
-    "em,i{font-style:italic}" +
-    "u{text-decoration:underline}" +
-    "a{color:#0b57d0;text-decoration:none}" +
-    "table{border-collapse:collapse;width:100%;margin:0 0 12px;font-size:10.5pt}" +
-    "th,td{border:1px solid #444;padding:6px 8px;vertical-align:top;text-align:left}" +
-    "th{background:#f3f4f6;font-weight:700}" +
-    "img{max-width:100%;height:auto;display:block;margin:8px 0}" +
-    "blockquote{margin:0 0 10px;padding:6px 12px;border-left:3px solid #bbb;color:#333}" +
-    "hr{border:none;border-top:1px solid #ccc;margin:14px 0}" +
-    "pre,code{font-family:ui-monospace,Consolas,monospace;font-size:10pt}" +
-    "pre{white-space:pre-wrap;background:#f7f7f8;border:1px solid #e5e7eb;padding:8px;margin:0 0 10px;border-radius:4px}";
-
-  /**
-   * Render HTML (from mammoth) into multipage PDF via html2canvas page slices.
-   * Preserves headings, lists, tables, inline emphasis, and embedded images.
-   */
-  async function writeHtmlDocument(doc, html, opts) {
-    if (!window.html2canvas) {
-      throw new Error(t("html2canvasMissing"));
-    }
-
-    var pageW = opts.pageW;
-    var pageH = opts.pageH;
-    var margin = opts.margin;
-    var contentWpt = Math.max(pageW - margin * 2, 40);
-    var contentHpt = Math.max(pageH - margin * 2, 40);
-    var contentWpx = Math.floor(contentWpt * PT_TO_CSS_PX);
-    var contentHpx = Math.floor(contentHpt * PT_TO_CSS_PX);
-
-    var host = document.createElement("div");
-    host.setAttribute("aria-hidden", "true");
-    host.style.cssText =
-      "position:fixed;left:-100000px;top:0;width:" +
-      contentWpx +
-      "px;background:#fff;z-index:-1;pointer-events:none;overflow:visible;";
-
-    var style = document.createElement("style");
-    style.textContent =
-      ".ke-docx-root{" +
-      DOCX_STYLE +
-      "width:" +
-      contentWpx +
-      "px;}" +
-      DOCX_INNER_CSS.split("}")
-        .filter(function (chunk) {
-          return chunk.trim();
-        })
-        .map(function (chunk) {
-          var parts = chunk.split("{");
-          if (parts.length < 2) return "";
-          var sel = parts[0].trim();
-          var body = parts.slice(1).join("{");
-          return (
-            sel
-              .split(",")
-              .map(function (s) {
-                return ".ke-docx-root " + s.trim();
-              })
-              .join(",") +
-            "{" +
-            body +
-            "}"
-          );
-        })
-        .join("");
-
-    var root = document.createElement("div");
-    root.className = "ke-docx-root";
-    root.innerHTML = html && html.trim() ? html : "<p>" + t("emptyDocument") + "</p>";
-
-    host.appendChild(style);
-    host.appendChild(root);
-    document.body.appendChild(host);
-
-    try {
-      await waitForImages(root);
-      // layout settle
-      await new Promise(function (r) {
-        requestAnimationFrame(function () {
-          requestAnimationFrame(r);
-        });
-      });
-
-      var scale = Math.min(2, window.devicePixelRatio || 1.5);
-      var fullCanvas = await window.html2canvas(root, {
-        backgroundColor: "#ffffff",
-        scale: scale,
-        useCORS: true,
-        logging: false,
-        width: contentWpx,
-        windowWidth: contentWpx,
-      });
-
-      var sliceH = Math.max(1, Math.floor(contentHpx * scale));
-      var totalH = fullCanvas.height;
-      var pageIndex = 0;
-
-      for (var y = 0; y < totalH; y += sliceH) {
-        var h = Math.min(sliceH, totalH - y);
-        // Avoid tiny trailing blank pages (< 8 CSS px)
-        if (h < 8 * scale && pageIndex > 0) break;
-
-        var pageCanvas = document.createElement("canvas");
-        pageCanvas.width = fullCanvas.width;
-        pageCanvas.height = h;
-        var ctx = pageCanvas.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-        ctx.drawImage(
-          fullCanvas,
-          0,
-          y,
-          fullCanvas.width,
-          h,
-          0,
-          0,
-          fullCanvas.width,
-          h
-        );
-
-        var dataUrl = pageCanvas.toDataURL("image/jpeg", 0.93);
-        if (pageIndex > 0) {
-          doc.addPage([pageW, pageH]);
-        }
-        // Draw slice into content box; height scales if last partial page
-        var drawH = (h / scale) * (72 / 96);
-        doc.addImage(dataUrl, "JPEG", margin, margin, contentWpt, drawH);
-        pageIndex++;
-
-        // yield UI
-        await new Promise(function (r) {
-          setTimeout(r, 0);
-        });
-      }
-
-      if (pageIndex === 0) {
-        // empty canvas edge case
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        doc.text("(empty)", margin, margin + 14);
-      }
-    } finally {
-      if (host.parentNode) host.parentNode.removeChild(host);
-    }
-  }
-
-  /**
-   * Build a PDF for one queue item.
-   */
-  async function itemToPdfBytes(item, options) {
-    if (item.kind === "pdf") {
-      return new Uint8Array(await readAsArrayBuffer(item.file));
-    }
-
-    var jsPDF = window.jspdf.jsPDF;
-    var margin = mmToPt(options.marginMm);
-    var pageSizeKey = options.pageSize;
-    var fixed = PAGE_SIZES[pageSizeKey] || PAGE_SIZES.a4;
-
-    if (item.kind === "image") {
-      var img = await loadImage(item.file);
-      var iw = img.naturalWidth || img.width;
-      var ih = img.naturalHeight || img.height;
-
-      var pageW;
-      var pageH;
-      if (pageSizeKey === "auto") {
-        // Page matches image aspect so contain/cover/stretch all fill naturally
-        var scale = 72 / 96;
-        pageW = Math.max(iw * scale, 72);
-        pageH = Math.max(ih * scale, 72);
-        var maxSide = 2000;
-        if (pageW > maxSide || pageH > maxSide) {
-          var s = maxSide / Math.max(pageW, pageH);
-          pageW *= s;
-          pageH *= s;
-        }
-      } else {
-        pageW = fixed.w;
-        pageH = fixed.h;
-      }
-
-      var doc = new jsPDF({
-        unit: "pt",
-        format: [pageW, pageH],
-        compress: true,
-      });
-
-      addImageToPage(doc, img, pageW, pageH, margin, options.imageFit);
-      return new Uint8Array(doc.output("arraybuffer"));
-    }
-
-    var pageW2 = fixed.w;
-    var pageH2 = fixed.h;
-    var doc2 = new jsPDF({ unit: "pt", format: [pageW2, pageH2], compress: true });
-
-    if (item.kind === "docx") {
-      if (!window.mammoth) throw new Error(t("mammothMissing"));
-      var ab = await readAsArrayBuffer(item.file);
-      var result = await window.mammoth.convertToHtml(
-        { arrayBuffer: ab },
-        {
-          convertImage: window.mammoth.images.imgElement(function (image) {
-            return image.read("base64").then(function (imageBuffer) {
-              return {
-                src: "data:" + image.contentType + ";base64," + imageBuffer,
-              };
-            });
-          }),
-          styleMap: [
-            "p[style-name='Title'] => h1:fresh",
-            "p[style-name='Subtitle'] => h2:fresh",
-            "p[style-name='Heading 1'] => h1:fresh",
-            "p[style-name='Heading 2'] => h2:fresh",
-            "p[style-name='Heading 3'] => h3:fresh",
-            "p[style-name='Heading 4'] => h4:fresh",
-            "r[style-name='Strong'] => strong",
-          ],
-        }
-      );
-      var html = result.value || "";
-      if (result.messages && result.messages.length) {
-        console.info("mammoth:", result.messages);
-      }
-      await writeHtmlDocument(doc2, html, {
-        pageW: pageW2,
-        pageH: pageH2,
-        margin: margin,
-      });
-      return new Uint8Array(doc2.output("arraybuffer"));
-    }
-
-    // plain text
-    var text = await readAsText(item.file);
-    text = (text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-    if (!text.trim()) text = t("emptyFile");
-
-    await writeTextDocument(doc2, text, {
-      pageW: pageW2,
-      pageH: pageH2,
-      margin: margin,
-    });
-
-    return new Uint8Array(doc2.output("arraybuffer"));
-  }
-
-  function hasNonLatin(str) {
-    for (var i = 0; i < str.length; i++) {
-      if (str.charCodeAt(i) > 255) return true;
-    }
-    return false;
-  }
-
-  async function writeTextDocument(doc, text, opts) {
-    var pageW = opts.pageW;
-    var pageH = opts.pageH;
-    var margin = opts.margin;
-    var maxW = pageW - margin * 2;
-    var lineHeight = 16;
-    var fontSize = 11;
-    var y = margin;
-
-    var paragraphs = text.split("\n");
-    var useCanvas = hasNonLatin(text);
-
-    function newPageIfNeeded(need) {
-      if (y + need > pageH - margin) {
-        doc.addPage([pageW, pageH]);
-        y = margin;
-      }
-    }
-
-    if (!useCanvas) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(fontSize);
-      for (var pi = 0; pi < paragraphs.length; pi++) {
-        var para = paragraphs[pi];
-        var lines = doc.splitTextToSize(para.length ? para : " ", maxW);
-        for (var li = 0; li < lines.length; li++) {
-          newPageIfNeeded(lineHeight);
-          doc.text(lines[li], margin, y + fontSize);
-          y += lineHeight;
-        }
-      }
-      return;
-    }
-
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var canvas = document.createElement("canvas");
-    var ctx = canvas.getContext("2d");
-    var cssW = Math.floor(maxW);
-    var padY = 2;
-    var fontSpec =
-      fontSize + 'px "Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif';
-    ctx.font = fontSpec;
-
-    function wrapLine(str) {
-      if (!str) return [" "];
-      var out = [];
-      var cur = "";
-      var chars = Array.from(str);
-      for (var ci = 0; ci < chars.length; ci++) {
-        var c = chars[ci];
-        var test = cur + c;
-        if (ctx.measureText(test).width > cssW && cur) {
-          out.push(cur);
-          cur = c;
-        } else {
-          cur = test;
-        }
-      }
-      if (cur) out.push(cur);
-      return out.length ? out : [" "];
-    }
-
-    for (var p = 0; p < paragraphs.length; p++) {
-      var plines = wrapLine(paragraphs[p]);
-      for (var l = 0; l < plines.length; l++) {
-        var line = plines[l];
-        newPageIfNeeded(lineHeight);
-        canvas.width = Math.ceil(cssW * dpr);
-        canvas.height = Math.ceil(lineHeight * dpr);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, cssW, lineHeight);
-        ctx.font = fontSpec;
-        ctx.fillStyle = "#111111";
-        ctx.textBaseline = "top";
-        ctx.fillText(line, 0, padY);
-        var dataUrl = canvas.toDataURL("image/png");
-        doc.addImage(dataUrl, "PNG", margin, y, maxW, lineHeight);
-        y += lineHeight;
-      }
-    }
-  }
-
-  async function mergePdfBytesList(list) {
-    var PDFDocument = PDFLib.PDFDocument;
-    var out = await PDFDocument.create();
-    for (var i = 0; i < list.length; i++) {
-      var src = await PDFDocument.load(list[i], { ignoreEncryption: true });
-      var pages = await out.copyPages(src, src.getPageIndices());
-      for (var j = 0; j < pages.length; j++) {
-        out.addPage(pages[j]);
-      }
-    }
-    return out.save();
-  }
+  function hideStatus() { setStatus(false); }
 
   function downloadBlob(blob, filename) {
     var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () {
-      URL.revokeObjectURL(url);
-    }, 2000);
-  }
-
-  function sanitizeFilename(name) {
-    var base = (name || "converted").trim() || "converted";
-    return base.replace(/[\\/:*?"<>|]+/g, "_").slice(0, 80);
+    var anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2500);
   }
 
   async function convertAll() {
-    if (converting) return;
-    syncOrderFromDom();
-    var queue = items.filter(function (x) {
-      return isConvertible(x.kind) && !x.errorKey;
-    });
-    if (!queue.length) {
-      toast(t("noConvertible"), true);
-      return;
-    }
-
-    if (!window.jspdf || !window.PDFLib) {
-      toast(t("coreMissing"), true);
-      return;
-    }
-
-    converting = true;
-    btnConvert.disabled = true;
-    btnClear.disabled = true;
+    if (state.busy) return;
+    var queue = validItems();
+    if (!queue.length) { toast(t("noConvertible"), true); return; }
+    if (!global.jspdf || !global.PDFLib) { toast(t("coreMissing"), true); return; }
+    var options = readOptions();
+    state.busy = true;
+    state.completed = false;
+    renderList();
     setStatus(true, t("converting"), 0, "");
-
-    var options = {
-      merge: $("optMerge").checked,
-      pageSize: $("optPageSize").value,
-      imageFit: $("optImageFit").value,
-      marginMm: Number($("optMargin").value) || 0,
-      filename: sanitizeFilename($("optFilename").value),
-    };
-
     try {
-      var pdfParts = [];
+      var parts = [];
       for (var i = 0; i < queue.length; i++) {
-        var it = queue[i];
-        setStatus(
-          true,
-          t("processing", { i: i + 1, n: queue.length }),
-          (i / queue.length) * 90,
-          it.name
-        );
-        var bytes = await itemToPdfBytes(it, options);
-        pdfParts.push({ name: it.name, bytes: bytes });
-        await new Promise(function (r) {
-          setTimeout(r, 0);
-        });
+        setStatus(true, t("processing", { i: i + 1, n: queue.length }), (i / queue.length) * 90, queue[i].name);
+        parts.push({ item: queue[i], bytes: await engine.itemToPdfBytes(queue[i], options) });
+        await new Promise(function (resolve) { setTimeout(resolve, 0); });
       }
-
       setStatus(true, t("generating"), 95, "");
-
-      if (options.merge || pdfParts.length === 1) {
-        var finalBytes;
-        if (pdfParts.length === 1) {
-          finalBytes = pdfParts[0].bytes;
-        } else {
-          finalBytes = await mergePdfBytesList(
-            pdfParts.map(function (p) {
-              return p.bytes;
-            })
-          );
-        }
-        var blob = new Blob([finalBytes], { type: "application/pdf" });
-        downloadBlob(blob, options.filename + ".pdf");
-        setStatus(true, t("done"), 100, t("downloaded", { name: options.filename + ".pdf" }));
-        toast(t("downloaded", { name: options.filename + ".pdf" }));
+      if (options.merge) {
+        var finalBytes = parts.length === 1 ? parts[0].bytes : await engine.mergePdfBytesList(parts.map(function (part) { return part.bytes; }));
+        var mergedName = engine.sanitizeFilename(options.filename) + ".pdf";
+        downloadBlob(new Blob([finalBytes], { type: "application/pdf" }), mergedName);
+        setStatus(true, t("done"), 100, t("downloaded", { name: mergedName }));
+        toast(t("downloaded", { name: mergedName }));
       } else {
-        for (var j = 0; j < pdfParts.length; j++) {
-          var p = pdfParts[j];
-          var base = p.name.replace(/\.[^.]+$/, "") || "file-" + (j + 1);
-          var fname = sanitizeFilename(base) + ".pdf";
-          downloadBlob(new Blob([p.bytes], { type: "application/pdf" }), fname);
-          setStatus(true, t("downloading"), 95 + (j / pdfParts.length) * 5, fname);
-          await new Promise(function (r) {
-            setTimeout(r, 350);
-          });
+        var usedNames = {};
+        for (var j = 0; j < parts.length; j++) {
+          var filename = engine.separateOutputName(parts[j].item, j, usedNames);
+          downloadBlob(new Blob([parts[j].bytes], { type: "application/pdf" }), filename);
+          setStatus(true, t("downloading"), 95 + ((j + 1) / parts.length) * 5, filename);
+          await new Promise(function (resolve) { setTimeout(resolve, 240); });
         }
-        setStatus(true, t("done"), 100, t("downloadedMany", { n: pdfParts.length }));
-        toast(t("downloadedMany", { n: pdfParts.length }));
+        setStatus(true, t("done"), 100, t("downloadedMany", { n: parts.length }));
+        toast(t("downloadedMany", { n: parts.length }));
       }
-    } catch (err) {
-      console.error(err);
-      setStatus(true, t("failed"), 0, (err && err.message) || String(err));
-      toast((err && err.message) || t("convertFailed"), true);
+      state.completed = true;
+    } catch (error) {
+      console.error(error);
+      state.completed = false;
+      setStatus(true, t("failed"), 0, error && error.message || String(error));
+      toast(error && error.message || t("convertFailed"), true);
     } finally {
-      converting = false;
+      state.busy = false;
       renderList();
+      syncControlPresentation();
     }
   }
 
-  dropzone.addEventListener("click", function () {
-    fileInput.click();
-  });
-  dropzone.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      fileInput.click();
+  function bindDropzone() {
+    function choose(event) {
+      if (event) { event.preventDefault(); event.stopPropagation(); }
+      if (!state.busy) els.fileInput.click();
     }
-  });
-  fileInput.addEventListener("change", function () {
-    addFiles(fileInput.files);
-    fileInput.value = "";
-  });
-
-  // Drag highlight: count enter/leave so child nodes don't leave the blue state stuck.
-  var dragDepth = 0;
-  function setDropHighlight(on) {
-    dropzone.classList.toggle("dragover", !!on);
-  }
-  function clearDropHighlight() {
-    dragDepth = 0;
-    setDropHighlight(false);
-  }
-
-  dropzone.addEventListener("dragenter", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dragDepth++;
-    setDropHighlight(true);
-  });
-  dropzone.addEventListener("dragover", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    // Some browsers skip a matching enter; keep highlight while over the zone
-    if (dragDepth === 0) dragDepth = 1;
-    setDropHighlight(true);
-  });
-  dropzone.addEventListener("dragleave", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    // Only clear when leaving the dropzone tree (not when moving between children)
-    var related = e.relatedTarget;
-    if (related && dropzone.contains(related)) {
-      return;
-    }
-    dragDepth = Math.max(0, dragDepth - 1);
-    if (dragDepth === 0) setDropHighlight(false);
-  });
-  dropzone.addEventListener("drop", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    clearDropHighlight();
-    addFiles(e.dataTransfer.files);
-  });
-
-  window.addEventListener("dragover", function (e) {
-    e.preventDefault();
-  });
-  // Drop/cancel outside the zone must also clear the blue state
-  window.addEventListener("drop", function (e) {
-    e.preventDefault();
-    clearDropHighlight();
-  });
-  window.addEventListener("dragend", function () {
-    clearDropHighlight();
-  });
-  // Leaving the browser window often reports relatedTarget === null
-  document.addEventListener("dragleave", function (e) {
-    if (e.relatedTarget == null || e.clientX <= 0 || e.clientY <= 0) {
-      clearDropHighlight();
-    }
-  });
-
-  btnClear.addEventListener("click", clearAll);
-  btnConvert.addEventListener("click", convertAll);
-
-  var langZh = $("langZh");
-  var langEn = $("langEn");
-  if (langZh) {
-    langZh.addEventListener("click", function () {
-      setLang("zh");
+    els.chooseFilesButton.addEventListener("click", choose);
+    els.dropzone.addEventListener("click", function (event) {
+      if (event.target.closest("button")) return;
+      choose(event);
     });
+    els.dropzone.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") choose(event);
+    });
+    els.fileInput.addEventListener("change", function () { addFiles(els.fileInput.files); els.fileInput.value = ""; });
+    var depth = 0;
+    function highlight(on) { els.dropzone.classList.toggle("dragover", !!on && !state.busy); }
+    function clear() { depth = 0; highlight(false); }
+    els.dropzone.addEventListener("dragenter", function (event) { event.preventDefault(); depth += 1; highlight(true); });
+    els.dropzone.addEventListener("dragover", function (event) { event.preventDefault(); if (!depth) depth = 1; highlight(true); });
+    els.dropzone.addEventListener("dragleave", function (event) {
+      event.preventDefault();
+      if (event.relatedTarget && els.dropzone.contains(event.relatedTarget)) return;
+      depth = Math.max(0, depth - 1); if (!depth) highlight(false);
+    });
+    els.dropzone.addEventListener("drop", function (event) { event.preventDefault(); clear(); addFiles(event.dataTransfer.files); });
+    global.addEventListener("dragover", function (event) { event.preventDefault(); });
+    global.addEventListener("drop", function (event) { event.preventDefault(); clear(); });
+    global.addEventListener("dragend", clear);
+    document.addEventListener("dragleave", function (event) { if (event.relatedTarget == null) clear(); });
   }
-  if (langEn) {
-    langEn.addEventListener("click", function () {
-      setLang("en");
+
+  function bindControls() {
+    [els.optPageSize, els.optImageFit, els.optMargin, els.optMerge, els.optFilename].forEach(function (control) {
+      control.addEventListener(control === els.optFilename || control === els.optMargin ? "input" : "change", function () {
+        state.completed = false;
+        hideStatus();
+        syncControlPresentation();
+        scheduleSettingsSave();
+      });
+    });
+    els.btnClear.addEventListener("click", clearAll);
+    els.btnConvert.addEventListener("click", convertAll);
+    els.langZh.addEventListener("click", function () { setLanguage("zh"); });
+    els.langEn.addEventListener("click", function () { setLanguage("en"); });
+    els.themeToggle.addEventListener("click", function () {
+      setAppearance(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark", true);
     });
   }
 
-  lang = detectLang();
-  applyStaticI18n();
-  renderList();
-})();
+  function init() {
+    setAppearance(detectAppearance(), false);
+    renderRuleOptions();
+    applySettings(loadSettings());
+    renderPresets();
+    bindDropzone();
+    bindControls();
+    applyStaticI18n();
+    syncControlPresentation();
+    renderList();
+  }
+
+  global.__KenEasyPdfApp = { addFiles: addFiles, readOptions: readOptions, state: state, engine: engine };
+  init();
+})(window);
