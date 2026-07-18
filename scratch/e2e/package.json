@@ -1,6 +1,6 @@
 ﻿{
   "name": "keneasy-pdf-converter-e2e",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Real-browser regression tests and README capture tooling for KenEasy PDF Converter",
   "scripts": {

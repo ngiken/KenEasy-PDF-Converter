@@ -23,14 +23,14 @@
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.0-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.1-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="Tests" src="https://img.shields.io/badge/e2e-30%2F30-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 <br/><br/>
 
-<img src="https://raw.githubusercontent.com/ngiken/KenEasy-PDF-Converter/main/docs/screenshots/hero-light.png" alt="KenEasy PDF Converter v0.3.0 浅色主界面" width="1200">
+<img src="https://raw.githubusercontent.com/ngiken/KenEasy-PDF-Converter/main/docs/screenshots/hero-light.png" alt="KenEasy PDF Converter v0.3.1 浅色主界面" width="1200">
 
 <sub>Apple-inspired 自适应界面 · 在线工具链接见上方</sub>
 
@@ -192,6 +192,12 @@ npm run capture:readme   # 重建 README 截图与 GIF
 ---
 
 ## 更新记录
+
+### v0.3.1
+
+- 输出设置改为即时保存，连续调整后立即生成或刷新也不会恢复初始值
+- 转换完成后继续保留合并方式、页面尺寸、图片适配、边距和文件名
+- 回归测试扩展至 32 项，加入转换后设置保持与立即刷新持久化验证
 
 ### v0.3.0
 

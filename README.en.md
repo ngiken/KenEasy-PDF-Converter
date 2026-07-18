@@ -23,14 +23,14 @@ Everything runs in your browser: **no upload, install, or account**.
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/use%20online-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.0-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.1-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="Tests" src="https://img.shields.io/badge/e2e-30%2F30-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 <br/><br/>
 
-<img src="https://raw.githubusercontent.com/ngiken/KenEasy-PDF-Converter/main/docs/screenshots/hero-light.png" alt="KenEasy PDF Converter v0.3.0 light interface" width="1200">
+<img src="https://raw.githubusercontent.com/ngiken/KenEasy-PDF-Converter/main/docs/screenshots/hero-light.png" alt="KenEasy PDF Converter v0.3.1 light interface" width="1200">
 
 <sub>Apple-inspired adaptive interface · live tool link above</sub>
 
@@ -192,6 +192,12 @@ The suite creates, downloads, and parses real PDFs. It covers data rules, mixed 
 ---
 
 ## Changelog
+
+### v0.3.1
+
+- Persist output settings immediately, including when generating or reloading directly after several changes
+- Keep merge mode, page size, image fit, margins, and filename unchanged after conversion
+- Expanded regression coverage to 32 checks with post-conversion and immediate-reload persistence tests
 
 ### v0.3.0
 

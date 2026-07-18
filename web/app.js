@@ -153,10 +153,13 @@
   }
 
   function scheduleSettingsSave() {
+    saveSettingsNow();
+  }
+
+  function saveSettingsNow() {
     clearTimeout(state.saveTimer);
-    state.saveTimer = setTimeout(function () {
-      try { localStorage.setItem(config.storageKeys.settings, JSON.stringify(readOptions())); } catch (error) {}
-    }, 120);
+    state.saveTimer = null;
+    try { localStorage.setItem(config.storageKeys.settings, JSON.stringify(readOptions())); } catch (error) {}
   }
 
   function renderRuleOptions() {
@@ -490,6 +493,7 @@
     if (!queue.length) { toast(t("noConvertible"), true); return; }
     if (!global.jspdf || !global.PDFLib) { toast(t("coreMissing"), true); return; }
     var options = readOptions();
+    saveSettingsNow();
     state.busy = true;
     state.completed = false;
     renderList();
@@ -579,6 +583,7 @@
     els.themeToggle.addEventListener("click", function () {
       setAppearance(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark", true);
     });
+    global.addEventListener("beforeunload", saveSettingsNow);
   }
 
   function init() {

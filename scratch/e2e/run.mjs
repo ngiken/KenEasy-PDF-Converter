@@ -57,7 +57,6 @@ page.on("download", async (download) => {
 });
 
 try {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
   check("page loads without console errors", errors.length === 0, errors.join(" | "));
   check("all vendor libraries load offline", await page.evaluate(() => Boolean(window.Sortable && window.jspdf && window.PDFLib && window.mammoth && window.html2canvas)));
@@ -132,6 +131,12 @@ try {
   check("separate preset downloads every item", separate.length === 3, separate.map((item) => item.name).join(", "));
   check("separate names are source-based and unique", new Set(separate.map((item) => item.name.toLowerCase())).size === 3 && separate.every((item) => item.name.endsWith(".pdf")));
   check("every separate output is a real PDF", separate.every((item) => signature(item.target) === "%PDF-"));
+  check("conversion does not reset the selected output settings", await page.evaluate(() =>
+    !document.getElementById("optMerge").checked &&
+    document.getElementById("optPageSize").value === "a4" &&
+    document.getElementById("optImageFit").value === "contain" &&
+    document.getElementById("optMargin").value === "12"
+  ));
 
   await page.evaluate(() => {
     const transfer = new DataTransfer(); transfer.items.add(new File(["legacy"], "old.doc", { type: "application/msword" }));
@@ -146,6 +151,21 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   check("mobile layout has no horizontal overflow", await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
+  await page.evaluate(() => {
+    const merge = document.getElementById("optMerge"); merge.checked = true; merge.dispatchEvent(new Event("change", { bubbles: true }));
+    const pageSize = document.getElementById("optPageSize"); pageSize.value = "letter"; pageSize.dispatchEvent(new Event("change", { bubbles: true }));
+    const fit = document.getElementById("optImageFit"); fit.value = "stretch"; fit.dispatchEvent(new Event("change", { bubbles: true }));
+    const margin = document.getElementById("optMargin"); margin.value = "7"; margin.dispatchEvent(new Event("input", { bubbles: true }));
+    const filename = document.getElementById("optFilename"); filename.value = "remember-me"; filename.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await page.reload({ waitUntil: "networkidle" });
+  check("latest settings survive an immediate reload", await page.evaluate(() =>
+    document.getElementById("optMerge").checked &&
+    document.getElementById("optPageSize").value === "letter" &&
+    document.getElementById("optImageFit").value === "stretch" &&
+    document.getElementById("optMargin").value === "7" &&
+    document.getElementById("optFilename").value === "remember-me"
+  ));
   check("runtime makes no external network requests", external.length === 0, external.join(" | "));
   check("no browser errors after full workflow", errors.length === 0, errors.join(" | "));
 } finally {
