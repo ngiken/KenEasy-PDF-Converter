@@ -233,6 +233,11 @@ The suite creates, downloads, and parses real PDFs. It covers data rules, mixed 
 
 ---
 
+
+## Friends / 友情链接
+
+- [LINUX DO](https://linux.do)
+
 ## License
 
 [MIT](LICENSE) © 2026

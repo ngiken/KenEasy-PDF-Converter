@@ -233,6 +233,11 @@ npm run capture:readme   # 重建 README 截图与 GIF
 
 ---
 
+
+## 友情链接
+
+- [LINUX DO](https://linux.do)
+
 ## License
 
 [MIT](LICENSE) © 2026
