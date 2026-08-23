@@ -153,7 +153,8 @@
   }
 
   function scheduleSettingsSave() {
-    saveSettingsNow();
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(saveSettingsNow, 100);
   }
 
   function saveSettingsNow() {
@@ -484,7 +485,7 @@
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 2500);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
   }
 
   async function convertAll() {

@@ -1,9 +1,9 @@
-﻿/* KenEasy PDF Converter — declarative product rules and defaults. */
+/* KenEasy PDF Converter — declarative product rules and defaults. */
 (function (global) {
   "use strict";
 
   var config = {
-    version: "0.3.1",
+    version: "0.3.2",
     storageKeys: {
       language: "keneasy-pdf-lang",
       appearance: "keneasy-pdf-appearance",
