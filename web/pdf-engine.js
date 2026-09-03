@@ -1,4 +1,4 @@
-﻿/* KenEasy PDF Converter — domain layer for validation, rendering, merging, and naming. */
+/* KenEasy PDF Converter — domain layer for validation, rendering, merging, and naming. */
 (function (global) {
   "use strict";
 
@@ -51,8 +51,8 @@
 
     function sanitizeFilename(name) {
       var fallback = config.defaults.filename || "converted";
-      var base = String(name || fallback).trim() || fallback;
-      return base.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").slice(0, config.limits.maxFilenameLength);
+      var raw = String(name || fallback).trim().replace(/\.pdf$/i, "").trim() || fallback;
+      return raw.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").trim().replace(/[. ]+$/, "").slice(0, config.limits.maxFilenameLength) || fallback;
     }
 
     function baseName(name) {
@@ -389,7 +389,11 @@
         return new Uint8Array(documentPdf.output("arraybuffer"));
       }
 
-      var text = String(await item.file.text()).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      var text = String(await item.file.text())
+        .replace(/^\uFEFF/, "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .replace(/\t/g, "    ");
       if (!text.trim()) text = t("emptyFile");
       await writeTextDocument(documentPdf, text, { pageWidth: fixed.width, pageHeight: fixed.height, margin: margin });
       return new Uint8Array(documentPdf.output("arraybuffer"));

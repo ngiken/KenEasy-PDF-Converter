@@ -23,7 +23,7 @@
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.2-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.3-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
 <img alt="Tests" src="https://img.shields.io/badge/e2e-32%2F32-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
@@ -192,6 +192,13 @@ npm run capture:readme   # 重建 README 截图与 GIF
 ---
 
 ## 更新记录
+
+### v0.3.3
+
+- 优化文本转 PDF 对 UTF-8 BOM（`\uFEFF`）与制表符的处理，避免纯文本带 BOM 时误判并强制降级栅格化
+- 强化输出文件名规范化，防止用户输入包含 `.pdf` 时产生重复扩展名及 Windows 尾随点号
+- 队列删除增加防连击重入保护，提升交互稳定性
+- 保持 32/32 项 Playwright 端到端全绿测试
 
 ### v0.3.1
 

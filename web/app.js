@@ -291,15 +291,18 @@
 
   function removeItem(id) {
     if (state.busy) return;
+    var index = state.items.findIndex(function (item) { return item.id === id; });
+    if (index < 0 || state.items[index].removing) return;
+    state.items[index].removing = true;
     var row = els.fileList.querySelector('[data-id="' + id + '"]');
     var done = false;
     function removeNow() {
       if (done) return;
       done = true;
-      var index = state.items.findIndex(function (item) { return item.id === id; });
-      if (index < 0) return;
-      releaseItem(state.items[index]);
-      state.items.splice(index, 1);
+      var liveIndex = state.items.findIndex(function (item) { return item.id === id; });
+      if (liveIndex < 0) return;
+      releaseItem(state.items[liveIndex]);
+      state.items.splice(liveIndex, 1);
       state.completed = false;
       hideStatus();
       renderList();

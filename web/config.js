@@ -3,7 +3,7 @@
   "use strict";
 
   var config = {
-    version: "0.3.2",
+    version: "0.3.3",
     storageKeys: {
       language: "keneasy-pdf-lang",
       appearance: "keneasy-pdf-appearance",
