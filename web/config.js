@@ -3,7 +3,7 @@
   "use strict";
 
   var config = {
-    version: "0.3.3",
+    version: "0.3.4",
     storageKeys: {
       language: "keneasy-pdf-lang",
       appearance: "keneasy-pdf-appearance",
@@ -17,13 +17,13 @@
       imagePageMaxPoints: 2000,
     },
     input: {
-      accept: ["png", "jpg", "jpeg", "webp", "gif", "bmp", "docx", "txt", "md", "markdown", "csv", "log", "json", "pdf"],
+      accept: ["png", "jpg", "jpeg", "webp", "gif", "bmp", "docx", "txt", "md", "markdown", "csv", "log", "json", "xml", "yaml", "yml", "tsv", "html", "pdf"],
       rules: [
         { kind: "image", extensions: ["png", "jpg", "jpeg", "webp", "gif", "bmp"], mimePrefixes: ["image/"] },
         { kind: "pdf", extensions: ["pdf"], mimeTypes: ["application/pdf"] },
         { kind: "docx", extensions: ["docx"], mimeTypes: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"] },
         { kind: "unsupported-doc", extensions: ["doc"], mimeTypes: ["application/msword"] },
-        { kind: "text", extensions: ["txt", "md", "markdown", "csv", "log", "json"], mimePrefixes: ["text/"] },
+        { kind: "text", extensions: ["txt", "md", "markdown", "csv", "log", "json", "xml", "yaml", "yml", "tsv", "html"], mimePrefixes: ["text/"] },
       ],
     },
     kinds: {
@@ -36,6 +36,8 @@
     },
     pageSizes: [
       { value: "a4", label: "A4", width: 595.28, height: 841.89 },
+      { value: "a3", label: "A3", width: 841.89, height: 1190.55 },
+      { value: "a5", label: "A5", width: 419.53, height: 595.28 },
       { value: "letter", label: "Letter", width: 612, height: 792 },
       { value: "auto", labelKey: "pageAuto", imageOnly: true },
     ],

@@ -1,4 +1,4 @@
-﻿/* KenEasy PDF Converter — isolated bilingual copy and translation service. */
+/* KenEasy PDF Converter — isolated bilingual copy and translation service. */
 (function (global) {
   "use strict";
 
@@ -34,7 +34,7 @@
       dropTitle: "把文件放到这里",
       dropHint: "拖放 Word、图片、文本或 PDF，也可以一次选择多个文件。",
       chooseFiles: "选择文件",
-      dropFormats: "图片 · DOCX · TXT / MD / CSV · PDF · 单个最大 {maxFileSize}",
+      dropFormats: "图片 · DOCX · TXT / MD / CSV / 代码文本 · PDF · 单个最大 {maxFileSize}",
       localPromise: "文件不会离开此设备",
       stepOptions: "02 · 设置",
       optionsTitle: "输出方案",
@@ -158,7 +158,7 @@
       dropTitle: "Drop files here",
       dropHint: "Drop Word, images, text, or PDFs — or choose multiple files at once.",
       chooseFiles: "Choose files",
-      dropFormats: "Images · DOCX · TXT / MD / CSV · PDF · up to {maxFileSize} each",
+      dropFormats: "Images · DOCX · TXT / MD / CSV / Code · PDF · up to {maxFileSize} each",
       localPromise: "Files never leave this device",
       stepOptions: "02 · SETTINGS",
       optionsTitle: "Output recipe",

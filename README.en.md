@@ -23,9 +23,9 @@ Everything runs in your browser: **no upload, install, or account**.
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/use%20online-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.3-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.4-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
-<img alt="Tests" src="https://img.shields.io/badge/e2e-32%2F32-27c499?style=for-the-badge">
+<img alt="Tests" src="https://img.shields.io/badge/e2e-33%2F33-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 <br/><br/>
