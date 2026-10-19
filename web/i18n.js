@@ -74,6 +74,7 @@
       queueCount: "{n} 个",
       queueTotal: "共 {size}",
       queueHint: "拖动手柄调整顺序；键盘聚焦手柄后可用 ↑ / ↓ 排序。",
+      btnReverse: "倒序",
       btnClear: "清空",
       btnConvert: "生成 PDF",
       btnWorking: "正在生成…",
@@ -126,6 +127,8 @@
       convertFailed: "转换失败",
       reordered: "已将 {name} 移到第 {position} 位",
       queueCleared: "队列已清空",
+      queueReversed: "已反转队列顺序",
+      pastedFromClipboard: "已从剪贴板添加内容",
     },
     en: {
       pageTitle: "KenEasy PDF Converter — local Word, image, and text to PDF",
@@ -198,6 +201,7 @@
       queueCount: "{n} files",
       queueTotal: "{size} total",
       queueHint: "Drag the handle to reorder; keyboard users can focus it and press ↑ / ↓.",
+      btnReverse: "Reverse",
       btnClear: "Clear",
       btnConvert: "Generate PDF",
       btnWorking: "Generating…",
@@ -250,6 +254,8 @@
       convertFailed: "Conversion failed",
       reordered: "Moved {name} to position {position}",
       queueCleared: "Queue cleared",
+      queueReversed: "Queue order reversed",
+      pastedFromClipboard: "Added content from clipboard",
     },
   };
 

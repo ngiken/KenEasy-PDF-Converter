@@ -23,9 +23,9 @@ Everything runs in your browser: **no upload, install, or account**.
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/use%20online-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.4-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.5-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
-<img alt="Tests" src="https://img.shields.io/badge/e2e-33%2F33-27c499?style=for-the-badge">
+<img alt="Tests" src="https://img.shields.io/badge/e2e-35%2F35-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 <br/><br/>
@@ -192,6 +192,19 @@ The suite creates, downloads, and parses real PDFs. It covers data rules, mixed 
 ---
 
 ## Changelog
+
+### v0.3.5
+
+- **Direct Clipboard Paste (`Ctrl+V`)**: Seamlessly paste screenshots, copied images, or text snippets directly into the conversion queue without saving to disk first.
+- **Reverse Queue Button**: Added a one-click "Reverse" action to the queue header to instantly flip input order, resolving inverse-order scanner batch pains.
+- **ISO 216 B5 Page Size Support**: Added standard B5 (`498.90 × 708.66 pt`) page size, widely used for textbooks and literature publishing in Asia.
+- **Expanded E2E Regression Suite**: Extended real-browser verification suite to 35/35 passing tests.
+
+### v0.3.4
+
+- **A3 & A5 Page Sizes**: Added ISO 216 standard A3 and A5 page sizes.
+- **Expanded Text/Code Formats**: Added plain-text parsing support for XML, YAML, YML, TSV, and HTML files.
+- **Bilingual Copy Sync**: Synchronized i18n dictionaries and cache-busting tokens.
 
 ### v0.3.3
 

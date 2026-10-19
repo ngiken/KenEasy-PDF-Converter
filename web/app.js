@@ -18,7 +18,7 @@
   var els = {
     dropzone: byId("dropzone"), chooseFilesButton: byId("chooseFilesButton"), fileInput: byId("fileInput"),
     fileList: byId("fileList"), emptyState: byId("emptyState"), fileCount: byId("fileCount"), queueTotal: byId("queueTotal"),
-    btnClear: byId("btnClear"), btnConvert: byId("btnConvert"), btnConvertLabel: byId("btnConvertLabel"), btnCount: byId("btnCount"),
+    btnReverse: byId("btnReverse"), btnClear: byId("btnClear"), btnConvert: byId("btnConvert"), btnConvertLabel: byId("btnConvertLabel"), btnCount: byId("btnCount"),
     actionHint: byId("actionHint"), statusPanel: byId("statusPanel"), statusText: byId("statusText"),
     statusPct: byId("statusPct"), statusDetail: byId("statusDetail"), progressBar: byId("progressBar"), progressTrack: byId("progressTrack"),
     presetList: byId("presetList"), optPageSize: byId("optPageSize"), optImageFit: byId("optImageFit"),
@@ -323,6 +323,13 @@
     toast(t("queueCleared"));
   }
 
+  function reverseQueue() {
+    if (state.busy || !state.items.length) return;
+    state.items.reverse();
+    renderList();
+    toast(t("queueReversed"));
+  }
+
   function syncOrderFromDom() {
     var map = new Map(state.items.map(function (item) { return [item.id, item]; }));
     var ordered = Array.prototype.map.call(els.fileList.children, function (row) { return map.get(row.dataset.id); }).filter(Boolean);
@@ -414,6 +421,7 @@
       els.fileList.appendChild(createFileRow(item, item.isNew ? newIndex++ : newIndex));
     });
     els.btnClear.disabled = !hasItems || state.busy;
+    if (els.btnReverse) els.btnReverse.disabled = !hasItems || state.busy;
     if (!state.sortable && global.Sortable) {
       state.sortable = global.Sortable.create(els.fileList, {
         handle: ".handle", animation: 160, ghostClass: "sortable-ghost", dragClass: "sortable-drag", onEnd: syncOrderFromDom,
@@ -580,6 +588,7 @@
         scheduleSettingsSave();
       });
     });
+    if (els.btnReverse) els.btnReverse.addEventListener("click", reverseQueue);
     els.btnClear.addEventListener("click", clearAll);
     els.btnConvert.addEventListener("click", convertAll);
     els.langZh.addEventListener("click", function () { setLanguage("zh"); });
@@ -590,6 +599,45 @@
     global.addEventListener("beforeunload", saveSettingsNow);
   }
 
+  function bindPaste() {
+    window.addEventListener("paste", function (event) {
+      if (state.busy) return;
+      var active = document.activeElement;
+      var tag = active && active.tagName ? active.tagName.toLowerCase() : "";
+      if (tag === "input" || tag === "textarea" || (active && active.isContentEditable)) return;
+
+      var clipboardData = event.clipboardData;
+      if (!clipboardData) return;
+
+      var files = Array.from(clipboardData.files || []);
+      if (!files.length && clipboardData.items) {
+        for (var i = 0; i < clipboardData.items.length; i++) {
+          var item = clipboardData.items[i];
+          if (item.kind === "file") {
+            var blob = item.getAsFile();
+            if (blob) files.push(blob);
+          }
+        }
+      }
+
+      if (files.length) {
+        event.preventDefault();
+        addFiles(files);
+        toast(t("pastedFromClipboard"));
+        return;
+      }
+
+      var text = clipboardData.getData("text/plain");
+      if (text && text.trim().length > 0) {
+        event.preventDefault();
+        var ts = new Date().toISOString().replace(/[:.]/g, "-").slice(11, 19);
+        var textFile = new File([text], "pasted-text-" + ts + ".txt", { type: "text/plain" });
+        addFiles([textFile]);
+        toast(t("pastedFromClipboard"));
+      }
+    });
+  }
+
   function init() {
     setAppearance(detectAppearance(), false);
     renderRuleOptions();
@@ -597,11 +645,12 @@
     renderPresets();
     bindDropzone();
     bindControls();
+    bindPaste();
     applyStaticI18n();
     syncControlPresentation();
     renderList();
   }
 
-  global.__KenEasyPdfApp = { addFiles: addFiles, readOptions: readOptions, state: state, engine: engine };
+  global.__KenEasyPdfApp = { addFiles: addFiles, readOptions: readOptions, state: state, engine: engine, reverseQueue: reverseQueue };
   init();
 })(window);

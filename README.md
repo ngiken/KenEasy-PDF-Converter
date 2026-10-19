@@ -23,9 +23,9 @@
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.4-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.5-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
-<img alt="Tests" src="https://img.shields.io/badge/e2e-33%2F33-27c499?style=for-the-badge">
+<img alt="Tests" src="https://img.shields.io/badge/e2e-35%2F35-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 <br/><br/>
@@ -192,6 +192,19 @@ npm run capture:readme   # 重建 README 截图与 GIF
 ---
 
 ## 更新记录
+
+### v0.3.5
+
+- 新增剪贴板直接粘贴（`Ctrl+V`）导入功能：截图、复制的图片或文本片段可直接粘贴进队列，无需预先保存到本地文件
+- 队列头部新增「倒序」一键快捷翻转按钮，解决扫描件或照片逆序导入时逐一手动拖动调整的痛点
+- 页面规格新增 ISO 216 标准 B5 纸张尺寸（`498.90 × 708.66 pt`），满足亚洲出版与教学讲义常见规格
+- 自动化端到端测试拓展至 35 项，保持 100% 全绿全通
+
+### v0.3.4
+
+- 页面规格拓展 ISO 216 标准 A3 与 A5 纸张尺寸
+- 文本与代码格式扩展支持 XML、YAML、YML、TSV、HTML
+- 界面双语与防缓存参数同步更新
 
 ### v0.3.3
 
