@@ -23,9 +23,9 @@ Everything runs in your browser: **no upload, install, or account**.
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/use%20online-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.5-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.6-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
-<img alt="Tests" src="https://img.shields.io/badge/e2e-35%2F35-27c499?style=for-the-badge">
+<img alt="Tests" src="https://img.shields.io/badge/e2e-36%2F36-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 <br/><br/>
@@ -192,6 +192,12 @@ The suite creates, downloads, and parses real PDFs. It covers data rules, mixed 
 ---
 
 ## Changelog
+
+### v0.3.6
+
+- **Queue Sort A-Z (Natural Alphanumeric)**: Added a one-click "A-Z" button to the queue header to instantly arrange files in natural alphabetic order, resolving out-of-order file picker batches.
+- **US Legal Page Size Support**: Added standard Legal (`612 × 1008 pt` / 8.5 × 14 in) page size for legal and North American enterprise documents.
+- **Expanded E2E Regression Suite**: Extended real-browser verification suite to 36/36 passing tests (100% green).
 
 ### v0.3.5
 

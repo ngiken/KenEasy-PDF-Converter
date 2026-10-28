@@ -3,7 +3,7 @@
   "use strict";
 
   var config = {
-    version: "0.3.5",
+    version: "0.3.6",
     storageKeys: {
       language: "keneasy-pdf-lang",
       appearance: "keneasy-pdf-appearance",
@@ -40,6 +40,7 @@
       { value: "a5", label: "A5", width: 419.53, height: 595.28 },
       { value: "b5", label: "B5", width: 498.90, height: 708.66 },
       { value: "letter", label: "Letter", width: 612, height: 792 },
+      { value: "legal", label: "Legal", width: 612, height: 1008 },
       { value: "auto", labelKey: "pageAuto", imageOnly: true },
     ],
     imageFits: [

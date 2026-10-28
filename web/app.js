@@ -18,7 +18,7 @@
   var els = {
     dropzone: byId("dropzone"), chooseFilesButton: byId("chooseFilesButton"), fileInput: byId("fileInput"),
     fileList: byId("fileList"), emptyState: byId("emptyState"), fileCount: byId("fileCount"), queueTotal: byId("queueTotal"),
-    btnReverse: byId("btnReverse"), btnClear: byId("btnClear"), btnConvert: byId("btnConvert"), btnConvertLabel: byId("btnConvertLabel"), btnCount: byId("btnCount"),
+    btnSortName: byId("btnSortName"), btnReverse: byId("btnReverse"), btnClear: byId("btnClear"), btnConvert: byId("btnConvert"), btnConvertLabel: byId("btnConvertLabel"), btnCount: byId("btnCount"),
     actionHint: byId("actionHint"), statusPanel: byId("statusPanel"), statusText: byId("statusText"),
     statusPct: byId("statusPct"), statusDetail: byId("statusDetail"), progressBar: byId("progressBar"), progressTrack: byId("progressTrack"),
     presetList: byId("presetList"), optPageSize: byId("optPageSize"), optImageFit: byId("optImageFit"),
@@ -330,6 +330,17 @@
     toast(t("queueReversed"));
   }
 
+  function sortQueueByName() {
+    if (state.busy || !state.items.length) return;
+    state.items.sort(function (a, b) {
+      var nameA = (a.file && a.file.name) || "";
+      var nameB = (b.file && b.file.name) || "";
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: "base" });
+    });
+    renderList();
+    toast(t("queueSortedName"));
+  }
+
   function syncOrderFromDom() {
     var map = new Map(state.items.map(function (item) { return [item.id, item]; }));
     var ordered = Array.prototype.map.call(els.fileList.children, function (row) { return map.get(row.dataset.id); }).filter(Boolean);
@@ -421,6 +432,7 @@
       els.fileList.appendChild(createFileRow(item, item.isNew ? newIndex++ : newIndex));
     });
     els.btnClear.disabled = !hasItems || state.busy;
+    if (els.btnSortName) els.btnSortName.disabled = !hasItems || state.busy;
     if (els.btnReverse) els.btnReverse.disabled = !hasItems || state.busy;
     if (!state.sortable && global.Sortable) {
       state.sortable = global.Sortable.create(els.fileList, {
@@ -588,6 +600,7 @@
         scheduleSettingsSave();
       });
     });
+    if (els.btnSortName) els.btnSortName.addEventListener("click", sortQueueByName);
     if (els.btnReverse) els.btnReverse.addEventListener("click", reverseQueue);
     els.btnClear.addEventListener("click", clearAll);
     els.btnConvert.addEventListener("click", convertAll);
@@ -651,6 +664,6 @@
     renderList();
   }
 
-  global.__KenEasyPdfApp = { addFiles: addFiles, readOptions: readOptions, state: state, engine: engine, reverseQueue: reverseQueue };
+  global.__KenEasyPdfApp = { addFiles: addFiles, readOptions: readOptions, state: state, engine: engine, reverseQueue: reverseQueue, sortQueueByName: sortQueueByName };
   init();
 })(window);

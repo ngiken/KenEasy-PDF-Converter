@@ -74,6 +74,7 @@
       queueCount: "{n} 个",
       queueTotal: "共 {size}",
       queueHint: "拖动手柄调整顺序；键盘聚焦手柄后可用 ↑ / ↓ 排序。",
+      btnSortName: "正序",
       btnReverse: "倒序",
       btnClear: "清空",
       btnConvert: "生成 PDF",
@@ -128,6 +129,7 @@
       reordered: "已将 {name} 移到第 {position} 位",
       queueCleared: "队列已清空",
       queueReversed: "已反转队列顺序",
+      queueSortedName: "已按文件名自然正序排列",
       pastedFromClipboard: "已从剪贴板添加内容",
     },
     en: {
@@ -201,6 +203,7 @@
       queueCount: "{n} files",
       queueTotal: "{size} total",
       queueHint: "Drag the handle to reorder; keyboard users can focus it and press ↑ / ↓.",
+      btnSortName: "A-Z",
       btnReverse: "Reverse",
       btnClear: "Clear",
       btnConvert: "Generate PDF",
@@ -255,6 +258,7 @@
       reordered: "Moved {name} to position {position}",
       queueCleared: "Queue cleared",
       queueReversed: "Queue order reversed",
+      queueSortedName: "Queue sorted alphabetically",
       pastedFromClipboard: "Added content from clipboard",
     },
   };

@@ -23,9 +23,9 @@
 <br/>
 
 <img alt="Use online" src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%BF%E7%94%A8-ngiken.github.io-fb7299?style=for-the-badge">
-<img alt="Version" src="https://img.shields.io/badge/version-0.3.5-0071e3?style=for-the-badge">
+<img alt="Version" src="https://img.shields.io/badge/version-0.3.6-0071e3?style=for-the-badge">
 <img alt="Privacy" src="https://img.shields.io/badge/privacy-local%20only-00aeec?style=for-the-badge">
-<img alt="Tests" src="https://img.shields.io/badge/e2e-35%2F35-27c499?style=for-the-badge">
+<img alt="Tests" src="https://img.shields.io/badge/e2e-36%2F36-27c499?style=for-the-badge">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-9aa4b2?style=for-the-badge">
 
 <br/><br/>
@@ -192,6 +192,12 @@ npm run capture:readme   # 重建 README 截图与 GIF
 ---
 
 ## 更新记录
+
+### v0.3.6
+
+- 队列头部新增「正序」一键快捷排序按钮，按文件名自然拼读（A-Z）原地重排队列，解决文件拾取乱序痛点
+- 页面规格新增标准 US Legal 纸张尺寸（`612 × 1008 pt` / 8.5 × 14 英寸），满足法务与北美办公文档规格
+- 自动化端到端测试拓展至 36 项，保持 100% 全绿全通
 
 ### v0.3.5
 
