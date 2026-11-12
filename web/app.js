@@ -152,35 +152,6 @@
     return settings;
   }
 
-  function savePref(id, value) {
-    try {
-      localStorage.setItem("keneasy.pdf." + id, value);
-    } catch (error) {}
-  }
-
-  function loadPref(id) {
-    try {
-      ["pageSize", "imageFit", "margin"].forEach(function (legacy) {
-        var legacyKey = ["keneasy", "pdf", legacy].join(".");
-        if (localStorage.getItem(legacyKey) !== null) localStorage.removeItem(legacyKey);
-      });
-      return localStorage.getItem("keneasy.pdf." + id);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  function restorePreferences() {
-    [els.optPageSize, els.optImageFit, els.optMargin].forEach(function (control) {
-      if (!control) return;
-      var saved = loadPref(control.id);
-      if (saved != null && saved !== "") {
-        control.value = saved;
-        control.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    });
-  }
-
   function scheduleSettingsSave() {
     clearTimeout(state.saveTimer);
     state.saveTimer = setTimeout(saveSettingsNow, 100);
@@ -189,12 +160,7 @@
   function saveSettingsNow() {
     clearTimeout(state.saveTimer);
     state.saveTimer = null;
-    try {
-      localStorage.setItem(config.storageKeys.settings, JSON.stringify(readOptions()));
-      [els.optPageSize, els.optImageFit, els.optMargin].forEach(function (control) {
-        if (control) savePref(control.id, control.value);
-      });
-    } catch (error) {}
+    try { localStorage.setItem(config.storageKeys.settings, JSON.stringify(readOptions())); } catch (error) {}
   }
 
   function renderRuleOptions() {
@@ -627,16 +593,11 @@
 
   function bindControls() {
     [els.optPageSize, els.optImageFit, els.optMargin, els.optMerge, els.optFilename].forEach(function (control) {
-      var isPref = control === els.optPageSize || control === els.optImageFit || control === els.optMargin;
-      var events = control === els.optFilename ? ["input"] : control === els.optMargin ? ["input", "change"] : ["change"];
-      events.forEach(function (evt) {
-        control.addEventListener(evt, function () {
-          if (isPref) savePref(control.id, control.value);
-          state.completed = false;
-          hideStatus();
-          syncControlPresentation();
-          scheduleSettingsSave();
-        });
+      control.addEventListener(control === els.optFilename || control === els.optMargin ? "input" : "change", function () {
+        state.completed = false;
+        hideStatus();
+        syncControlPresentation();
+        scheduleSettingsSave();
       });
     });
     if (els.btnSortName) els.btnSortName.addEventListener("click", sortQueueByName);
@@ -697,7 +658,6 @@
     renderPresets();
     bindDropzone();
     bindControls();
-    restorePreferences();
     bindPaste();
     applyStaticI18n();
     syncControlPresentation();
