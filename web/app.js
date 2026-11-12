@@ -155,15 +155,16 @@
   function savePref(id, value) {
     try {
       localStorage.setItem("keneasy.pdf." + id, value);
-      var shortKey = id.replace(/^opt/, "").replace(/^[A-Z]/, function (c) { return c.toLowerCase(); });
-      localStorage.setItem("keneasy.pdf." + shortKey, value);
     } catch (error) {}
   }
 
   function loadPref(id) {
     try {
-      var shortKey = id.replace(/^opt/, "").replace(/^[A-Z]/, function (c) { return c.toLowerCase(); });
-      return localStorage.getItem("keneasy.pdf." + id) || localStorage.getItem("keneasy.pdf." + shortKey);
+      ["pageSize", "imageFit", "margin"].forEach(function (legacy) {
+        var legacyKey = ["keneasy", "pdf", legacy].join(".");
+        if (localStorage.getItem(legacyKey) !== null) localStorage.removeItem(legacyKey);
+      });
+      return localStorage.getItem("keneasy.pdf." + id);
     } catch (error) {
       return null;
     }
